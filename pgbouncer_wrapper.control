@@ -2,3 +2,4 @@
 comment = 'Wrap pgbouncer output in a FDW'
 default_version = '0.0.1'
 relocatable = true
+requires = 'dblink'
