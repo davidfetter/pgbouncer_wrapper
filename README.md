@@ -1,6 +1,8 @@
 pgbouncer_wrapper
 =================
 
+This is a wrapper around Peter Eisentraut's excellent [post](http://peter.eisentraut.org/blog/2015/03/25/retrieving-pgbouncer-statistics-via-dblink/)
+
 A long description
 
 To build it, just do this:
