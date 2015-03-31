@@ -47,31 +47,13 @@ You need to run the test suite using a super user, such as the default
 
     make installcheck PGUSER=postgres
 
-Once pgbouncer_wrapper is installed, you can add it to a database. If you're running
-PostgreSQL 9.1.0 or greater, it's a simple as connecting to a database as a
-super user and running:
+Once pgbouncer_wrapper is installed, you can add it to a database like this:
 
     CREATE EXTENSION pgbouncer_wrapper;
 
-If you've upgraded your cluster to PostgreSQL 9.1 and already had pgbouncer_wrapper
-installed, you can upgrade it to a properly packaged extension with:
-
-    CREATE EXTENSION pgbouncer_wrapper FROM unpackaged;
-
-For versions of PostgreSQL less than 9.1.0, you'll need to run the
-installation script:
-
-    psql -d mydb -f /path/to/pgsql/share/contrib/pgbouncer_wrapper.sql
-
-If you want to install pgbouncer_wrapper and all of its supporting objects into a specific
-schema, use the `PGOPTIONS` environment variable to specify the schema, like
-so:
-
-    PGOPTIONS=--search_path=extensions psql -d mydb -f pgbouncer_wrapper.sql
-
 Dependencies
 ------------
-The `pgbouncer_wrapper` data type has no dependencies other than PostgreSQL.
+`pgbouncer_wrapper` depends on dblink.
 
 Copyright and License
 ---------------------
