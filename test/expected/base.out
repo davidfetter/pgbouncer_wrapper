@@ -1,0 +1,49 @@
+\set ECHO 0
+-- You should write your tests
+SELECT pgbouncer_wrapper('foo', 'bar');
+ pgbouncer_wrapper 
+-------------------
+ (foo,bar)
+(1 row)
+
+SELECT 'foo' #? 'bar' AS arrowop;
+  arrowop  
+-----------
+ (foo,bar)
+(1 row)
+
+CREATE TABLE ab (
+    a_field pgbouncer_wrapper
+);
+INSERT INTO ab VALUES('foo' #? 'bar');
+SELECT (a_field).a, (a_field).b FROM ab;
+  a  |  b  
+-----+-----
+ foo | bar
+(1 row)
+
+SELECT (pgbouncer_wrapper('foo', 'bar')).a;
+  a  
+-----
+ foo
+(1 row)
+
+SELECT (pgbouncer_wrapper('foo', 'bar')).b;
+  b  
+-----
+ bar
+(1 row)
+
+SELECT ('foo' #? 'bar').a;
+  a  
+-----
+ foo
+(1 row)
+
+SELECT ('foo' #? 'bar').b;
+  b  
+-----
+ bar
+(1 row)
+
+ROLLBACK;

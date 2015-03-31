@@ -1,0 +1,25 @@
+{
+    "name": "pgbouncer_wrapper",
+    "abstract": "Wrap pgbouncer output in a FDW",
+    "description": "A long description",
+    "version": "0.0.1",
+    "maintainer": "David Fetter <david@farmersbusinessnetwork.com>",
+    "license": "bsd2",
+    "provides": {
+        "pgbouncer_wrapper": {
+            "abstract": "Wrap pgbouncer output in a FDW",
+            "file": "sql/pgbouncer_wrapper.sql",
+            "docfile": "doc/pgbouncer_wrapper.md",
+            "version": "0.0.1"
+        }
+    },
+    "release_status": "unstable",
+
+    "generated_by": "David Fetter <david@farmersbusinessnetwork.com>",
+
+
+    "meta-spec": {
+        "version": "1.0.0",
+        "url": "http://pgxn.org/meta/spec.txt"
+    }
+}
