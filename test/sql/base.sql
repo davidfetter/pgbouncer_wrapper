@@ -1,25 +1,24 @@
 \set ECHO 0
 BEGIN;
-\i sql/pgbouncer_wrapper.sql
+CREATE EXTENSION IF NOT EXISTS dblink;
+CREATE EXTENSION pgbouncer_wrapper;
 \set ECHO all
 
--- You should write your tests
+-- Make sure that the views are actually there.
 
-SELECT pgbouncer_wrapper('foo', 'bar');
-
-SELECT 'foo' #? 'bar' AS arrowop;
-
-CREATE TABLE ab (
-    a_field pgbouncer_wrapper
-);
-
-INSERT INTO ab VALUES('foo' #? 'bar');
-SELECT (a_field).a, (a_field).b FROM ab;
-
-SELECT (pgbouncer_wrapper('foo', 'bar')).a;
-SELECT (pgbouncer_wrapper('foo', 'bar')).b;
-
-SELECT ('foo' #? 'bar').a;
-SELECT ('foo' #? 'bar').b;
+SELECT * FROM pgbouncer.active_sockets WHERE false;
+SELECT * FROM pgbouncer.clients WHERE false;
+SELECT * FROM pgbouncer.config WHERE false;
+SELECT * FROM pgbouncer.databases WHERE false;
+SELECT * FROM pgbouncer.dns_hosts WHERE false;
+SELECT * FROM pgbouncer.dns_zones WHERE false;
+SELECT * FROM pgbouncer.fds WHERE false;
+SELECT * FROM pgbouncer.lists WHERE false;
+SELECT * FROM pgbouncer.mem WHERE false;
+SELECT * FROM pgbouncer.pools WHERE false;
+SELECT * FROM pgbouncer.servers WHERE false;
+SELECT * FROM pgbouncer.sockets WHERE false;
+SELECT * FROM pgbouncer.stats WHERE false;
+SELECT * FROM pgbouncer.users WHERE false;
 
 ROLLBACK;

@@ -1,49 +1,74 @@
 \set ECHO 0
--- You should write your tests
-SELECT pgbouncer_wrapper('foo', 'bar');
- pgbouncer_wrapper 
--------------------
- (foo,bar)
-(1 row)
+unrecognized value "0" for "ECHO"; assuming "none"
+-- Make sure that the views are actually there.
+SELECT * FROM pgbouncer.active_sockets WHERE false;
+ type | user | database | state | addr | port | local_addr | local_port | connect_time | request_time | ptr | link | remote_pid | recv_pos | pkt_pos | pkt_remain | send_pos | send_remain | pkt_avail | send_avail 
+------+------+----------+-------+------+------+------------+------------+--------------+--------------+-----+------+------------+----------+---------+------------+----------+-------------+-----------+------------
+(0 rows)
 
-SELECT 'foo' #? 'bar' AS arrowop;
-  arrowop  
------------
- (foo,bar)
-(1 row)
+SELECT * FROM pgbouncer.clients WHERE false;
+ type | user | database | state | addr | port | local_addr | local_port | connect_time | request_time | ptr | link | remote_pid 
+------+------+----------+-------+------+------+------------+------------+--------------+--------------+-----+------+------------
+(0 rows)
 
-CREATE TABLE ab (
-    a_field pgbouncer_wrapper
-);
-INSERT INTO ab VALUES('foo' #? 'bar');
-SELECT (a_field).a, (a_field).b FROM ab;
-  a  |  b  
------+-----
- foo | bar
-(1 row)
+SELECT * FROM pgbouncer.config WHERE false;
+ key | value | changeable 
+-----+-------+------------
+(0 rows)
 
-SELECT (pgbouncer_wrapper('foo', 'bar')).a;
-  a  
------
- foo
-(1 row)
+SELECT * FROM pgbouncer.databases WHERE false;
+ name | host | port | database | force_user | pool_size | reserve_pool | pool_mode | max_connections | current_connections 
+------+------+------+----------+------------+-----------+--------------+-----------+-----------------+---------------------
+(0 rows)
 
-SELECT (pgbouncer_wrapper('foo', 'bar')).b;
-  b  
------
- bar
-(1 row)
+SELECT * FROM pgbouncer.dns_hosts WHERE false;
+ hostname | ttl | addrs 
+----------+-----+-------
+(0 rows)
 
-SELECT ('foo' #? 'bar').a;
-  a  
------
- foo
-(1 row)
+SELECT * FROM pgbouncer.dns_zones WHERE false;
+ zonename | serial | count 
+----------+--------+-------
+(0 rows)
 
-SELECT ('foo' #? 'bar').b;
-  b  
------
- bar
-(1 row)
+SELECT * FROM pgbouncer.fds WHERE false;
+ fd | task | user | database | addr | port | cancel | link | client_encoding | std_strings | datestyle | timezone | password 
+----+------+------+----------+------+------+--------+------+-----------------+-------------+-----------+----------+----------
+(0 rows)
+
+SELECT * FROM pgbouncer.lists WHERE false;
+ list | items 
+------+-------
+(0 rows)
+
+SELECT * FROM pgbouncer.mem WHERE false;
+ name | size | used | free | memtotal 
+------+------+------+------+----------
+(0 rows)
+
+SELECT * FROM pgbouncer.pools WHERE false;
+ database | user | cl_active | cl_waiting | sv_active | sv_idle | sv_used | sv_tested | sv_login | maxwait | pool_mode 
+----------+------+-----------+------------+-----------+---------+---------+-----------+----------+---------+-----------
+(0 rows)
+
+SELECT * FROM pgbouncer.servers WHERE false;
+ type | user | database | state | addr | port | local_addr | local_port | connect_time | request_time | ptr | link | remote_pid 
+------+------+----------+-------+------+------+------------+------------+--------------+--------------+-----+------+------------
+(0 rows)
+
+SELECT * FROM pgbouncer.sockets WHERE false;
+ type | user | database | state | addr | port | local_addr | local_port | connect_time | request_time | ptr | link | remote_pid | recv_pos | pkt_pos | pkt_remain | send_pos | send_remain | pkt_avail | send_avail 
+------+------+----------+-------+------+------+------------+------------+--------------+--------------+-----+------+------------+----------+---------+------------+----------+-------------+-----------+------------
+(0 rows)
+
+SELECT * FROM pgbouncer.stats WHERE false;
+ database | total_requests | total_received | total_sent | total_query_time | avg_req | avg_recv | avg_sent | avg_query 
+----------+----------------+----------------+------------+------------------+---------+----------+----------+-----------
+(0 rows)
+
+SELECT * FROM pgbouncer.users WHERE false;
+ name | pool_mode 
+------+-----------
+(0 rows)
 
 ROLLBACK;
