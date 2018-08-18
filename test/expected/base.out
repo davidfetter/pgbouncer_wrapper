@@ -1,5 +1,4 @@
-\set ECHO 0
-unrecognized value "0" for "ECHO"; assuming "none"
+\set ECHO none
 -- Make sure that the views are actually there.
 SELECT * FROM pgbouncer.active_sockets WHERE false;
  type | user | database | state | addr | port | local_addr | local_port | connect_time | request_time | ptr | link | remote_pid | recv_pos | pkt_pos | pkt_remain | send_pos | send_remain | pkt_avail | send_avail 

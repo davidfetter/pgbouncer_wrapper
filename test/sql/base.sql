@@ -1,4 +1,4 @@
-\set ECHO 0
+\set ECHO none
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS dblink;
 CREATE EXTENSION pgbouncer_wrapper;
