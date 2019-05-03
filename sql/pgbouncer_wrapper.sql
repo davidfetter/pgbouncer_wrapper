@@ -2,6 +2,7 @@
  * Author: David Fetter <david@farmersbusinessnetwork.com>
  * Created at: 2015-03-31 07:18:40 -0700
  *
+ * Update for pgbouncer v1.9.0: Michael Vitale <michaeldba@sqlexec.com>
  */
 
 -- customize start
@@ -32,9 +33,13 @@ CREATE VIEW pgbouncer.active_sockets AS
         local_port int,
         connect_time timestamp,
         request_time timestamp,
+        wait int,
+        wait_us int,
+        close_needed int,
         ptr text,
         link text,
         remote_pid int,
+        tls text,
         recv_pos int,
         pkt_pos int,
         pkt_remain int,
@@ -57,9 +62,13 @@ CREATE VIEW pgbouncer.clients AS
         local_port int,
         connect_time timestamp,
         request_time timestamp,
+        wait int,
+        wait_us int,
+        close_needed int,
         ptr text,
         link text,
-        remote_pid integer
+        remote_pid integer,
+        tls text
     );
 
 /* SHOW CONFIG */
@@ -82,7 +91,9 @@ CREATE VIEW pgbouncer.databases AS
         reserve_pool int,
         pool_mode text,
         max_connections int,
-        current_connections int
+        current_connections int,
+        paused int,
+        disabled int
     );
 
 /* SHOW DNS_HOSTS */
@@ -152,6 +163,7 @@ CREATE VIEW pgbouncer.pools AS
         sv_tested int,
         sv_login int,
         maxwait int,
+        maxwait_us int,
         pool_mode text
     );
 
@@ -168,9 +180,13 @@ CREATE VIEW pgbouncer.servers AS
         local_port int,
         connect_time timestamp,
         request_time timestamp,
+        wait int,
+        wait_us int,
+        close_needed int,
         ptr text,
         link text,
-        remote_pid int
+        remote_pid int,
+        tls text
     );
 
 /* SHOW SOCKETS */
@@ -186,9 +202,13 @@ CREATE VIEW pgbouncer.sockets AS
         local_port int,
         connect_time timestamp,
         request_time timestamp,
+        wait int,
+        wait_us int,
+        close_needed int,
         ptr text,
         link text,
         remote_pid int,
+        tls text,
         recv_pos int,
         pkt_pos int,
         pkt_remain int,
@@ -202,14 +222,20 @@ CREATE VIEW pgbouncer.sockets AS
 CREATE VIEW pgbouncer.stats AS
     SELECT * FROM dblink('pgbouncer', 'show stats') AS _(
         database text,
-        total_requests bigint,
-        total_received bigint,
-        total_sent bigint,
-        total_query_time bigint,
-        avg_req bigint,
-        avg_recv bigint,
-        avg_sent bigint,
-        avg_query bigint
+        total_xact_count bigint,
+        total_query_count bigint,
+        total_received    bigint,
+        total_sent        bigint,
+        total_xact_time   bigint,
+        total_query_time  bigint,
+        total_wait_time   bigint,
+        avg_xact_count    bigint,
+        avg_query_count   bigint,
+        avg_recv          bigint,
+        avg_sent          bigint,
+        avg_xact_time     bigint,
+        avg_query_time    bigint,
+        avg_wait_time     bigint
     );
 
 /* SHOW USERS */
