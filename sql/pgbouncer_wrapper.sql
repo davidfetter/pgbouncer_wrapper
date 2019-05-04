@@ -28,25 +28,25 @@ CREATE VIEW pgbouncer.active_sockets AS
         database text,
         state text,
         addr text,
-        port int,
+        port integer,
         local_addr text,
-        local_port int,
+        local_port integer,
         connect_time timestamp,
         request_time timestamp,
-        wait int,
-        wait_us int,
-        close_needed int,
+        wait integer,
+        wait_us integer,
+        close_needed integer,
         ptr text,
         link text,
-        remote_pid int,
+        remote_pid integer,
         tls text,
-        recv_pos int,
-        pkt_pos int,
-        pkt_remain int,
-        send_pos int,
-        send_remain int,
-        pkt_avail int,
-        send_avail int
+        recv_pos integer,
+        pkt_pos integer,
+        pkt_remain integer,
+        send_pos integer,
+        send_remain integer,
+        pkt_avail integer,
+        send_avail integer
     );
 
 /* SHOW CLIENTS */
@@ -57,14 +57,14 @@ CREATE VIEW pgbouncer.clients AS
         database text,
         state text,
         addr text,
-        port int,
+        port integer,
         local_addr text,
-        local_port int,
+        local_port integer,
         connect_time timestamp,
         request_time timestamp,
-        wait int,
-        wait_us int,
-        close_needed int,
+        wait integer,
+        wait_us integer,
+        close_needed integer,
         ptr text,
         link text,
         remote_pid integer,
@@ -84,16 +84,16 @@ CREATE VIEW pgbouncer.databases AS
     SELECT * FROM dblink('pgbouncer', 'show databases') AS _(
         name text,
         host text,
-        port int,
+        port integer,
         database text,
         force_user text,
-        pool_size int,
-        reserve_pool int,
+        pool_size integer,
+        reserve_pool integer,
         pool_mode text,
-        max_connections int,
-        current_connections int,
-        paused int,
-        disabled int
+        max_connections integer,
+        current_connections integer,
+        paused integer,
+        disabled integer
     );
 
 /* SHOW DNS_HOSTS */
@@ -109,7 +109,7 @@ CREATE VIEW pgbouncer.dns_zones AS
     SELECT * FROM dblink('pgbouncer', 'show dns_zones') AS _(
         zonename text,
         serial bigint,
-        count int
+        count integer
     );
 
 /* SHOW FDS */
@@ -130,15 +130,15 @@ CREATE VIEW pgbouncer.fds AS
         password text
     );
 
+/* SHOW HELP */
+/* XXX Not implemented as this comes in as a NOTICE, not as a rowset. */
+
 /* SHOW LISTS */
 CREATE VIEW pgbouncer.lists AS
     SELECT * FROM dblink('pgbouncer', 'show lists') AS _(
         list text,
-        items int
+        items integer
     );
-
-/* SHOW HELP */
-/* XXX Not implemented as this comes in as a NOTICE, not as a rowset. */
 
 /* SHOW MEM */
 CREATE VIEW pgbouncer.mem AS
@@ -155,15 +155,15 @@ CREATE VIEW pgbouncer.pools AS
     SELECT * FROM dblink('pgbouncer', 'show pools') AS _(
         database text,
         "user" text,
-        cl_active int,
-        cl_waiting int,
-        sv_active int,
-        sv_idle int,
-        sv_used int,
-        sv_tested int,
-        sv_login int,
-        maxwait int,
-        maxwait_us int,
+        cl_active integer,
+        cl_waiting integer,
+        sv_active integer,
+        sv_idle integer,
+        sv_used integer,
+        sv_tested integer,
+        sv_login integer,
+        maxwait integer,
+        maxwait_us integer,
         pool_mode text
     );
 
@@ -175,17 +175,17 @@ CREATE VIEW pgbouncer.servers AS
         database text,
         state text,
         addr text,
-        port int,
+        port integer,
         local_addr text,
-        local_port int,
+        local_port integer,
         connect_time timestamp,
         request_time timestamp,
-        wait int,
-        wait_us int,
-        close_needed int,
+        wait integer,
+        wait_us integer,
+        close_needed integer,
         ptr text,
         link text,
-        remote_pid int,
+        remote_pid integer,
         tls text
     );
 
@@ -197,25 +197,25 @@ CREATE VIEW pgbouncer.sockets AS
         database text,
         state text,
         addr text,
-        port int,
+        port integer,
         local_addr text,
-        local_port int,
+        local_port integer,
         connect_time timestamp,
         request_time timestamp,
-        wait int,
-        wait_us int,
-        close_needed int,
+        wait integer,
+        wait_us integer,
+        close_needed integer,
         ptr text,
         link text,
-        remote_pid int,
+        remote_pid integer,
         tls text,
-        recv_pos int,
-        pkt_pos int,
-        pkt_remain int,
-        send_pos int,
-        send_remain int,
-        pkt_avail int,
-        send_avail int
+        recv_pos integer,
+        pkt_pos integer,
+        pkt_remain integer,
+        send_pos integer,
+        send_remain integer,
+        pkt_avail integer,
+        send_avail integer
     );
 
 /* SHOW STATS */
@@ -224,18 +224,51 @@ CREATE VIEW pgbouncer.stats AS
         database text,
         total_xact_count bigint,
         total_query_count bigint,
-        total_received    bigint,
-        total_sent        bigint,
-        total_xact_time   bigint,
-        total_query_time  bigint,
-        total_wait_time   bigint,
-        avg_xact_count    bigint,
-        avg_query_count   bigint,
-        avg_recv          bigint,
-        avg_sent          bigint,
-        avg_xact_time     bigint,
-        avg_query_time    bigint,
-        avg_wait_time     bigint
+        total_received bigint,
+        total_sent bigint,
+        total_xact_time bigint,
+        total_query_time bigint,
+        total_wait_time bigint,
+        avg_xact_count bigint,
+        avg_query_count bigint,
+        avg_recv bigint,
+        avg_sent bigint,
+        avg_xact_time bigint,
+        avg_query_time bigint,
+        avg_wait_time bigint
+    );
+
+/* SHOW STATS_AVERAGES */
+CREATE VIEW pgbouncer.stats_averages AS
+    SELECT * FROM dblink('pgbouncer', 'show stats_averages') AS _(
+        database text,
+        xact_count bigint,
+        query_count bigint,
+        bytes_received bigint,
+        bytes_sent bigint,
+        xact_time bigint,
+        query_time bigint,
+        wait_time bigint
+    );
+
+/* SHOW STATS_TOTALS */
+CREATE VIEW pgbouncer.stats_totals AS
+    SELECT * FROM dblink('pgbouncer', 'show stats_totals') AS _(
+        database text,
+        xact_count bigint,
+        query_count bigint,
+        bytes_received bigint,
+        bytes_sent bigint,
+        xact_time bigint,
+        query_time bigint,
+        wait_time bigint
+    );
+
+/* SHOW TOTALS */
+CREATE VIEW pgbouncer.totals AS
+    SELECT * FROM dblink('pgbouncer', 'show totals') AS _(
+        name text,
+        value bigint
     );
 
 /* SHOW USERS */
