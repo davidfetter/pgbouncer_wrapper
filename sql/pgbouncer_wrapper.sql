@@ -1,5 +1,5 @@
 /*
- * Author: David Fetter <david@farmersbusinessnetwork.com>
+ * Author: David Fetter <david@fetter.org>
  * Created at: 2015-03-31 07:18:40 -0700
  *
  * Update for pgbouncer v1.9.0: Michael Vitale <michaeldba@sqlexec.com>

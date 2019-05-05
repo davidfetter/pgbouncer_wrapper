@@ -24,10 +24,10 @@ Support
 Author
 ------
 
-[David Fetter <david@farmersbusinessnetwork.com>]
+[David Fetter <david@fetter.org>]
 
 Copyright and License
 ---------------------
 
-Copyright (c) 2015 David Fetter <david@farmersbusinessnetwork.com>.
+Copyright (c) 2015-2019 David Fetter <david@fetter.org>.
 
