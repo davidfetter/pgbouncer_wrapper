@@ -4,30 +4,33 @@ pgbouncer_wrapper
 Synopsis
 --------
 
-  Show a brief synopsis of the extension.
+  ```sql
+  SELECT count(*) FROM pgbouncer.sockets;
+  ```
 
 Description
 -----------
 
-A long description
+  pgbouncer provides a tantalizingly tabular-looking set of primitives for
+  monitoring it. `pgbouncer_wrapper` goes the rest of the way and exposes them
+  for reading via SQL.
 
 Usage
 -----
 
-  Show usage.
+  Install the extension. Connect it to pgbouncer. Enjoy the SQL!
 
 Support
 -------
 
-  There is issues tracker? Github? Put this information here.
+  https://github.com/davidfetter/pgbouncer_wrapper/issues
 
 Author
 ------
 
-[David Fetter <david@fetter.org>]
+  [David Fetter](mailto:david@fetter.org)
 
-Copyright and License
----------------------
+Copyright
+---------
 
-Copyright (c) 2015-2019 David Fetter <david@fetter.org>.
-
+  Copyright (c) 2015-2019 David Fetter &lt;david@fetter.org&gt;.
