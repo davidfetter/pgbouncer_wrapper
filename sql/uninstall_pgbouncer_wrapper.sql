@@ -15,23 +15,23 @@ BEGIN;
 -- You can use this statements as
 -- template for your extension.
 
-DROP VIEW active_sockets CASCADE;
-DROP VIEW clients CASCADE;
-DROP VIEW config CASCADE;
-DROP VIEW databases CASCADE;
-DROP VIEW dns_hosts CASCADE;
-DROP VIEW dns_zones CASCADE;
-DROP VIEW fds CASCADE;
-DROP VIEW lists CASCADE;
-DROP VIEW mem CASCADE;
-DROP VIEW pools CASCADE;
-DROP VIEW servers CASCADE;
-DROP VIEW sockets CASCADE;
-DROP VIEW stats CASCADE;
-DROP VIEW stats_averages CASCADE;
-DROP VIEW stats_totals CASCADE;
-DROP VIEW totals CASCADE;
-DROP VIEW users CASCADE;
+DROP VIEW pgbouncer.active_sockets CASCADE;
+DROP VIEW pgbouncer.clients CASCADE;
+DROP VIEW pgbouncer.config CASCADE;
+DROP VIEW pgbouncer.databases CASCADE;
+DROP VIEW pgbouncer.dns_hosts CASCADE;
+DROP VIEW pgbouncer.dns_zones CASCADE;
+DROP VIEW pgbouncer.fds CASCADE;
+DROP VIEW pgbouncer.lists CASCADE;
+DROP VIEW pgbouncer.mem CASCADE;
+DROP VIEW pgbouncer.pools CASCADE;
+DROP VIEW pgbouncer.servers CASCADE;
+DROP VIEW pgbouncer.sockets CASCADE;
+DROP VIEW pgbouncer.stats CASCADE;
+DROP VIEW pgbouncer.stats_averages CASCADE;
+DROP VIEW pgbouncer.stats_totals CASCADE;
+DROP VIEW pgbouncer.totals CASCADE;
+DROP VIEW pgbouncer.users CASCADE;
 DROP SCHEMA pgbouncer CASCADE;
 DROP SERVER pgbouncer CASCADE;
 
