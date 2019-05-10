@@ -12,9 +12,10 @@ my %items;
 
 my $source_dir = '~/pggit/pgbouncer';
 
+# First, the SHOW commands. They are more transparent.
 # Go straight to the source's mouth.
 open my $fh, '-|', qq!grep -ERo '{([^[:space:]]+), .*admin_show.*}' $source_dir/* | cut -d '"' -f 2!
-    or die "Couldn't open psql to pgbouncer: $!";
+    or die "Couldn't find the admin_show commands in the source: $!";
 
 while (my $line = <$fh>) {
     chomp $line;
@@ -81,3 +82,6 @@ foreach my $item(sort keys %items) {
         EOT
     }
 }
+
+$dbh->disconnect;
+$dbh_pg->disconnect;
