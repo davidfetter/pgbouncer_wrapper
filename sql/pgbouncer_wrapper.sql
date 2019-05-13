@@ -7,13 +7,13 @@
 
 -- customize start
 CREATE SERVER pgbouncer FOREIGN DATA WRAPPER dblink_fdw OPTIONS (
-    host 'localhost',
+    host '/tmp',
     port '6432',
     dbname 'pgbouncer'
 );
 
 CREATE USER MAPPING FOR PUBLIC SERVER pgbouncer OPTIONS (
-    user 'postgres'
+    user 'pgbouncer'
 );
 -- customize stop
 
