@@ -24,6 +24,7 @@ while (my $line = <$fh>) {
 
 close $fh;
 
+=begin GHOST_CODE
 my $dbh=DBI->connect('dbi:Pg:dbname=pgbouncer;host=/tmp;port=6432','pgbouncer','')
     or die "Couldn't connect to pgbouncer: $!";
 
@@ -85,3 +86,68 @@ foreach my $item(sort keys %items) {
 
 $dbh->disconnect;
 $dbh_pg->disconnect;
+
+=end GHOST_CODE
+=cut
+
+# Now, the rest:
+open $fh, '-|', qq!grep -ERo '{([^[:space:]]+), .*admin_cmd.*}' $source_dir/* | cut -d '"' -f 2 | grep -v show!
+    or die "Couldn't find the rest of the commands in the source: $!";
+
+%items=();
+
+while (my $line = <$fh>) {
+    chomp $line;
+    next if $line eq 'select';
+    $items{$line}=1;
+}
+
+my @no_params = qw(suspend shutdown reload);
+my @non_optional_params = qw(disable enable kill);
+
+foreach my $item (sort keys %items) {
+    if (grep(/^$item$/, @no_params)) {
+        say <<~EOT
+        /* @{[uc($item)]} */
+        CREATE FUNCTION pgbouncer.$item()
+        RETURNS VOID
+        LANGUAGE sql
+        AS \$\$
+            SELECT dblink_exec('pgbouncer', '$item');
+        \$\$;
+        EOT
+    }
+    elsif (grep(/^$item$/, @non_optional_params)) {
+        say <<~EOT
+        /* @{[uc($item)]} db */
+        CREATE FUNCTION pgbouncer.$item(db TEXT)
+        RETURNS VOID
+        LANGUAGE sql
+        AS \$\$
+            SELECT dblink_exec('pgbouncer', format('%s %s', '$item', db));
+        \$\$;
+        EOT
+    }
+    else {
+        say <<~EOT
+        /* @{[uc($item)]} [db] */
+        CREATE FUNCTION pgbouncer.$item(db TEXT DEFAULT NULL)
+        RETURNS VOID
+        LANGUAGE sql
+        AS \$\$
+        SELECT
+            dblink_exec('pgbouncer', format('%s%s', '$item', COALESCE(' ' || db, '')));
+        \$\$;
+        EOT
+    }
+}
+say <<~'EOT'
+/* SET key = value */
+CREATE FUNCTION pgbouncer."set"(key TEXT, value TEXT)
+RETURNS VOID
+LANGUAGE SQL
+AS $$
+SELECT
+    dblink_exec('pgbouncer', format('SET %s=%L', key, value));
+$$;
+EOT

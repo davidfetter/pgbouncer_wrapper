@@ -32,6 +32,17 @@ DROP VIEW pgbouncer.stats_averages CASCADE;
 DROP VIEW pgbouncer.stats_totals CASCADE;
 DROP VIEW pgbouncer.totals CASCADE;
 DROP VIEW pgbouncer.users CASCADE;
+DROP FUNCTION pgbouncer.disable(db TEXT);
+DROP FUNCTION pgbouncer.enable(db TEXT);
+DROP FUNCTION pgbouncer.kill(db TEXT);
+DROP FUNCTION pgbouncer.pause(db TEXT);
+DROP FUNCTION pgbouncer.reconnect(db TEXT);
+DROP FUNCTION pgbouncer.reload();
+DROP FUNCTION pgbouncer.resume(db TEXT);
+DROP FUNCTION pgbouncer.shutdown();
+DROP FUNCTION pgbouncer.suspend();
+DROP FUNCTION pgbouncer.wait_close(db TEXT);
+DROP FUNCTION pgbouncer."set"(key TEXT, value TEXT);
 DROP SCHEMA pgbouncer CASCADE;
 DROP SERVER pgbouncer CASCADE;
 

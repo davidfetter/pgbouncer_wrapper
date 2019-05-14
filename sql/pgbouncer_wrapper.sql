@@ -280,3 +280,97 @@ CREATE VIEW pgbouncer.users AS
 
 /* SHOW VERSION */
 /* XXX Not implemented as this comes in as a NOTICE, not as a rowset. */
+
+/* DISABLE db */
+CREATE FUNCTION pgbouncer.disable(db TEXT)
+RETURNS VOID
+LANGUAGE sql
+AS $$
+    SELECT dblink_exec('pgbouncer', format('%s %s', 'disable', db));
+$$;
+
+/* ENABLE db */
+CREATE FUNCTION pgbouncer.enable(db TEXT)
+RETURNS VOID
+LANGUAGE sql
+AS $$
+    SELECT dblink_exec('pgbouncer', format('%s %s', 'enable', db));
+$$;
+
+/* KILL db */
+CREATE FUNCTION pgbouncer.kill(db TEXT)
+RETURNS VOID
+LANGUAGE sql
+AS $$
+    SELECT dblink_exec('pgbouncer', format('%s %s', 'kill', db));
+$$;
+
+/* PAUSE [db] */
+CREATE FUNCTION pgbouncer.pause(db TEXT DEFAULT NULL)
+RETURNS VOID
+LANGUAGE sql
+AS $$
+SELECT
+    dblink_exec('pgbouncer', format('%s%s', 'pause', COALESCE(' ' || db, '')));
+$$;
+
+/* RECONNECT [db] */
+CREATE FUNCTION pgbouncer.reconnect(db TEXT DEFAULT NULL)
+RETURNS VOID
+LANGUAGE sql
+AS $$
+SELECT
+    dblink_exec('pgbouncer', format('%s%s', 'reconnect', COALESCE(' ' || db, '')));
+$$;
+
+/* RELOAD */
+CREATE FUNCTION pgbouncer.reload()
+RETURNS VOID
+LANGUAGE sql
+AS $$
+    SELECT dblink_exec('pgbouncer', 'reload');
+$$;
+
+/* RESUME [db] */
+CREATE FUNCTION pgbouncer.resume(db TEXT DEFAULT NULL)
+RETURNS VOID
+LANGUAGE sql
+AS $$
+SELECT
+    dblink_exec('pgbouncer', format('%s%s', 'resume', COALESCE(' ' || db, '')));
+$$;
+
+/* SHUTDOWN */
+CREATE FUNCTION pgbouncer.shutdown()
+RETURNS VOID
+LANGUAGE sql
+AS $$
+    SELECT dblink_exec('pgbouncer', 'shutdown');
+$$;
+
+/* SUSPEND */
+CREATE FUNCTION pgbouncer.suspend()
+RETURNS VOID
+LANGUAGE sql
+AS $$
+    SELECT dblink_exec('pgbouncer', 'suspend');
+$$;
+
+/* WAIT_CLOSE [db] */
+CREATE FUNCTION pgbouncer.wait_close(db TEXT DEFAULT NULL)
+RETURNS VOID
+LANGUAGE sql
+AS $$
+SELECT
+    dblink_exec('pgbouncer', format('%s%s', 'wait_close', COALESCE(' ' || db, '')));
+$$;
+
+/* SET key = value */
+CREATE FUNCTION pgbouncer."set"(key TEXT, value TEXT)
+RETURNS VOID
+LANGUAGE SQL
+AS $$
+SELECT
+    dblink_exec('pgbouncer', format('SET %s=%L', key, value));
+$$;
+
