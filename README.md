@@ -22,6 +22,31 @@ Once pgbouncer_wrapper is installed, you can add it to a database like this:
 
     CREATE EXTENSION pgbouncer_wrapper;
 
+You can change pgbouncer settings like this:
+```sql
+SELECT set('default_pool_size', '300');
+```
+
+To see whether the current configuration is out of step with `pgbouncer.ini`, you can do:
+
+```sql
+SELECT
+    count(*) > 0 AS "out of step"
+FROM
+    regexp_split_to_table(
+        pg_read_file('/etc/pgbouncer/pgbouncer.ini'),
+        E'\n'
+    ) WITH ORDINALITY AS t(l, o)
+JOIN
+    config c
+    ON (
+        c.key =
+        (string_to_array(t.l, ' = '))[1]
+    )
+WHERE
+    format('%s = %s', key, value) <> l;
+```
+
 Dependencies
 ------------
 `pgbouncer_wrapper` depends on dblink.
