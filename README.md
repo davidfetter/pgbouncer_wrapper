@@ -22,6 +22,17 @@ Once pgbouncer_wrapper is installed, you can add it to a database like this:
 
     CREATE EXTENSION pgbouncer_wrapper;
 
+You can find how many clients are coming from each address like this:
+
+```sql
+SELECT
+    addr, count(*)
+FROM
+    clients
+GROUP BY addr
+ORDER BY count(*) DESC;
+```
+
 You can change pgbouncer settings like this:
 ```sql
 SELECT set('default_pool_size', '300');
