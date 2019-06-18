@@ -395,6 +395,7 @@ LANGUAGE sql
 AS $$
     SELECT dblink_exec('pgbouncer', format('%s %s', 'disable', db));
 $$;
+COMMENT ON FUNCTION pgbouncer.disable(db TEXT) IS $$Reject all new client connections on the given database.$$;
 
 /* ENABLE db */
 CREATE FUNCTION pgbouncer.enable(db TEXT)
@@ -403,6 +404,7 @@ LANGUAGE sql
 AS $$
     SELECT dblink_exec('pgbouncer', format('%s %s', 'enable', db));
 $$;
+COMMENT ON FUNCTION pgbouncer.enable(db TEXT) IS $$Allow new client connections after a previous DISABLE command.$$;
 
 /* KILL db */
 CREATE FUNCTION pgbouncer.kill(db TEXT)
@@ -411,6 +413,9 @@ LANGUAGE sql
 AS $$
     SELECT dblink_exec('pgbouncer', format('%s %s', 'kill', db));
 $$;
+COMMENT ON FUNCTION pgbouncer.kill(db TEXT) IS $$Immediately drop all client and server connections on given database.
+
+New client connections to a killed database will wait until RESUME is called.$$;
 
 /* PAUSE [db] */
 CREATE FUNCTION pgbouncer.pause(db TEXT DEFAULT NULL)
@@ -420,6 +425,13 @@ AS $$
 SELECT
     dblink_exec('pgbouncer', format('%s%s', 'pause', COALESCE(' ' || db, '')));
 $$;
+COMMENT ON FUNCTION pgbouncer.pause(db TEXT) IS $$PgBouncer tries to disconnect from all servers, first waiting for all queries to
+complete. The command will not return before all queries are finished. To be
+used at the time of database restart.
+
+If database name is given, only that database will be paused.
+
+New client connections to a paused database will wait until RESUME is called.$$;
 
 /* RECONNECT [db] */
 CREATE FUNCTION pgbouncer.reconnect(db TEXT DEFAULT NULL)
@@ -429,6 +441,26 @@ AS $$
 SELECT
     dblink_exec('pgbouncer', format('%s%s', 'reconnect', COALESCE(' ' || db, '')));
 $$;
+COMMENT ON FUNCTION pgbouncer.reconnect(db TEXT) IS $$Close each open server connection for the given database, or all databases,
+after it is released (according to the pooling mode), even if its lifetime is
+not up yet. New server connections can be made immediately and will connect as
+necessary according to the pool size settings.
+
+This command is useful when the server connection setup has changed, for example
+to perform a gradual switchover to a new server. It is not necessary to run this
+command when the connection string in pgbouncer.ini has been changed and
+reloaded (see RELOAD) or when DNS resolution has changed, because then the
+equivalent of this command will be run automatically. This command is only
+necessary if something downstream of PgBouncer routes the connections.
+
+After this command is run, there could be an extended period where some server
+connections go to an old destination and some server connections go to a new
+destination. This is likely only sensible when switching read-only traffic
+between read-only replicas, or when switching between nodes of a multimaster
+replication setup. If all connections need to be switched at the same time,
+PAUSE is recommended instead. To close server connections without waiting (for
+example, in emergency failover rather than gradual switchover scenarios),
+also consider KILL.$$;
 
 /* RELOAD */
 CREATE FUNCTION pgbouncer.reload()
@@ -437,6 +469,13 @@ LANGUAGE sql
 AS $$
     SELECT dblink_exec('pgbouncer', 'reload');
 $$;
+COMMENT ON FUNCTION pgbouncer.reload() IS $$The PgBouncer process will reload its configuration file and update changeable settings.
+
+PgBouncer notices when a configuration file reload changes the connection
+parameters of a database definition. An existing server connection to the old
+destination will be closed when the server connection is next released
+(according to the pooling mode), and new server connections will immediately use
+the updated connection parameters.$$;
 
 /* RESUME [db] */
 CREATE FUNCTION pgbouncer.resume(db TEXT DEFAULT NULL)
@@ -446,6 +485,7 @@ AS $$
 SELECT
     dblink_exec('pgbouncer', format('%s%s', 'resume', COALESCE(' ' || db, '')));
 $$;
+COMMENT ON FUNCTION pgbouncer.resume(db TEXT) IS $$Resume work from previous KILL, PAUSE, or SUSPEND command.$$;
 
 /* SHUTDOWN */
 CREATE FUNCTION pgbouncer.shutdown()
@@ -454,6 +494,7 @@ LANGUAGE sql
 AS $$
     SELECT dblink_exec('pgbouncer', 'shutdown');
 $$;
+COMMENT ON FUNCTION pgbouncer.shutdown() IS $$The PgBouncer process will exit.$$;
 
 /* SUSPEND */
 CREATE FUNCTION pgbouncer.suspend()
@@ -462,6 +503,11 @@ LANGUAGE sql
 AS $$
     SELECT dblink_exec('pgbouncer', 'suspend');
 $$;
+COMMENT ON FUNCTION pgbouncer.suspend() IS $$All socket buffers are flushed and PgBouncer stops listening for data on them.
+The command will not return before all buffers are empty. To be used at the time
+of PgBouncer online reboot.
+
+New client connections to a suspended database will wait until RESUME is called.$$;
 
 /* WAIT_CLOSE [db] */
 CREATE FUNCTION pgbouncer.wait_close(db TEXT DEFAULT NULL)
@@ -471,6 +517,10 @@ AS $$
 SELECT
     dblink_exec('pgbouncer', format('%s%s', 'wait_close', COALESCE(' ' || db, '')));
 $$;
+COMMENT ON FUNCTION pgbouncer.wait_close(db TEXT) IS $$Wait until all server connections, either of the specified database or of all
+databases, have cleared the “close_needed” state (see SHOW SERVERS). This can be
+called after aRECONNECT** or RELOAD to wait until the respective configuration
+change has been fully activated, for example in switchover scripts.$$;
 
 /* SET key = value */
 CREATE FUNCTION pgbouncer."set"(key TEXT, value TEXT)
@@ -480,4 +530,4 @@ AS $$
 SELECT
     dblink_exec('pgbouncer', format('SET %s=%L', key, value));
 $$;
-
+COMMENT ON FUNCTION pgbouncer."set"(key TEXT, value TEXT) IS $$Changes a configuration setting (see also the config VIEW).$$;
