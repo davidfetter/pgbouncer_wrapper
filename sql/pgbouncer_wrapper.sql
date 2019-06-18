@@ -70,6 +70,23 @@ CREATE VIEW pgbouncer.clients AS
         remote_pid integer,
         tls text
     );
+COMMENT ON COLUMN pgbouncer.clients."type" IS $$C, for client.$$;
+COMMENT ON COLUMN pgbouncer.clients."user" IS $$Client connected user.$$;
+COMMENT ON COLUMN pgbouncer.clients."database" IS $$Database name.$$;
+COMMENT ON COLUMN pgbouncer.clients."state" IS $$State of the client connection, one of active, used, waiting or idle.$$;
+COMMENT ON COLUMN pgbouncer.clients."addr" IS $$IP address of client.$$;
+COMMENT ON COLUMN pgbouncer.clients."port" IS $$Port client is connected to.$$;
+COMMENT ON COLUMN pgbouncer.clients."local_addr" IS $$Connection end address on local machine.$$;
+COMMENT ON COLUMN pgbouncer.clients."local_port" IS $$Connection end port on local machine.$$;
+COMMENT ON COLUMN pgbouncer.clients."connect_time" IS $$Timestamp of connect time.$$;
+COMMENT ON COLUMN pgbouncer.clients."request_time" IS $$Timestamp of latest client request.$$;
+COMMENT ON COLUMN pgbouncer.clients."wait" IS $$Current waiting time in seconds.$$;
+COMMENT ON COLUMN pgbouncer.clients."wait_us" IS $$Microsecond part of the current waiting time.$$;
+COMMENT ON COLUMN pgbouncer.clients."close_needed" IS $$not used for clients$$;
+COMMENT ON COLUMN pgbouncer.clients."ptr" IS $$Address of internal object for this connection. Used as unique ID.$$;
+COMMENT ON COLUMN pgbouncer.clients."link" IS $$Address of server connection the client is paired with.$$;
+COMMENT ON COLUMN pgbouncer.clients."remote_pid" IS $$Process ID, in case client connects over Unix socket and OS supports getting it.$$;
+COMMENT ON COLUMN pgbouncer.clients."tls" IS $$A string with TLS connection information, or empty if not using TLS.$$;
 
 /* SHOW CONFIG */
 CREATE VIEW pgbouncer.config AS
@@ -78,6 +95,9 @@ CREATE VIEW pgbouncer.config AS
         value text,
         changeable boolean
     );
+COMMENT ON COLUMN pgbouncer.config."key" IS $$Configuration variable name$$;
+COMMENT ON COLUMN pgbouncer.config."value" IS $$Configuration value$$;
+COMMENT ON COLUMN pgbouncer.config."changeable" IS $$Either yes or no, shows if the variable can be changed while running. If no, the variable can be changed only at boot time. Use SET to change a variable at run time.$$;
 
 /* SHOW DATABASES */
 CREATE VIEW pgbouncer.databases AS
@@ -95,6 +115,17 @@ CREATE VIEW pgbouncer.databases AS
         paused integer,
         disabled integer
     );
+COMMENT ON COLUMN pgbouncer.databases."name" IS $$Name of configured database entry.$$;
+COMMENT ON COLUMN pgbouncer.databases."host" IS $$Host pgbouncer connects to.$$;
+COMMENT ON COLUMN pgbouncer.databases."port" IS $$Port pgbouncer connects to.$$;
+COMMENT ON COLUMN pgbouncer.databases."database" IS $$Actual database name pgbouncer connects to.$$;
+COMMENT ON COLUMN pgbouncer.databases."force_user" IS $$When user is part of the connection string, the connection between pgbouncer and PostgreSQL is forced to the given user, whatever the client user.$$;
+COMMENT ON COLUMN pgbouncer.databases."pool_size" IS $$Maximum number of server connections.$$;
+COMMENT ON COLUMN pgbouncer.databases."pool_mode" IS $$The database’s override pool_mode, or NULL if the default will be used instead.$$;
+COMMENT ON COLUMN pgbouncer.databases."max_connections" IS $$Maximum number of allowed connections for this database, as set by max_db_connections, either globally or per database.$$;
+COMMENT ON COLUMN pgbouncer.databases."current_connections" IS $$Current number of connections for this database.$$;
+COMMENT ON COLUMN pgbouncer.databases."paused" IS $$1 if this database is currently paused, else 0.$$;
+COMMENT ON COLUMN pgbouncer.databases."disabled" IS $$1 if this database is currently disabled, else 0.$$;
 
 /* SHOW DNS_HOSTS */
 CREATE VIEW pgbouncer.dns_hosts AS
@@ -103,6 +134,9 @@ CREATE VIEW pgbouncer.dns_hosts AS
         ttl bigint,
         addrs text
     );
+COMMENT ON COLUMN pgbouncer.dns_hosts."hostname" IS $$Host name.$$;
+COMMENT ON COLUMN pgbouncer.dns_hosts."ttl" IS $$How many seconds until next lookup.$$;
+COMMENT ON COLUMN pgbouncer.dns_hosts."addrs" IS $$Comma separated list of addresses.$$;
 
 /* SHOW DNS_ZONES */
 CREATE VIEW pgbouncer.dns_zones AS
@@ -111,6 +145,9 @@ CREATE VIEW pgbouncer.dns_zones AS
         serial bigint,
         count integer
     );
+COMMENT ON COLUMN pgbouncer.dns_zones."zonename" IS $$Zone name.$$;
+COMMENT ON COLUMN pgbouncer.dns_zones."serial" IS $$Current serial.$$;
+COMMENT ON COLUMN pgbouncer.dns_zones."count" IS $$Host names belonging to this zone.$$;
 
 /* SHOW FDS */
 CREATE VIEW pgbouncer.fds AS
@@ -129,6 +166,14 @@ CREATE VIEW pgbouncer.fds AS
         timezone text,
         password text
     );
+COMMENT ON COLUMN pgbouncer.fds."fd" IS $$File descriptor numeric value.$$;
+COMMENT ON COLUMN pgbouncer.fds."task" IS $$One of pooler, client or server.$$;
+COMMENT ON COLUMN pgbouncer.fds."user" IS $$User of the connection using the FD.$$;
+COMMENT ON COLUMN pgbouncer.fds."database" IS $$Database of the connection using the FD.$$;
+COMMENT ON COLUMN pgbouncer.fds."addr" IS $$IP address of the connection using the FD, unix if a Unix socket is used.$$;
+COMMENT ON COLUMN pgbouncer.fds."port" IS $$Port used by the connection using the FD.$$;
+COMMENT ON COLUMN pgbouncer.fds."cancel" IS $$Cancel key for this connection.$$;
+COMMENT ON COLUMN pgbouncer.fds."link" IS $$fd for corresponding server/client. NULL if idle.$$;
 
 /* SHOW HELP */
 /* XXX Not implemented as this comes in as a NOTICE, not as a rowset. */
@@ -166,6 +211,18 @@ CREATE VIEW pgbouncer.pools AS
         maxwait_us integer,
         pool_mode text
     );
+COMMENT ON COLUMN pgbouncer.pools."database" IS $$Database name.$$;
+COMMENT ON COLUMN pgbouncer.pools."user" IS $$User name.$$;
+COMMENT ON COLUMN pgbouncer.pools."cl_active" IS $$Client connections that are linked to server connection and can process queries.$$;
+COMMENT ON COLUMN pgbouncer.pools."cl_waiting" IS $$Client connections have sent queries but have not yet got a server connection.$$;
+COMMENT ON COLUMN pgbouncer.pools."sv_active" IS $$Server connections that linked to client.$$;
+COMMENT ON COLUMN pgbouncer.pools."sv_idle" IS $$Server connections that unused and immediately usable for client queries.$$;
+COMMENT ON COLUMN pgbouncer.pools."sv_used" IS $$Server connections that have been idle more than server_check_delay, so they needs server_check_query to run on it before it can be used.$$;
+COMMENT ON COLUMN pgbouncer.pools."sv_tested" IS $$Server connections that are currently running either server_reset_query or server_check_query.$$;
+COMMENT ON COLUMN pgbouncer.pools."sv_login" IS $$Server connections currently in logging in process.$$;
+COMMENT ON COLUMN pgbouncer.pools."maxwait" IS $$How long the first (oldest) client in queue has waited, in seconds. If this starts increasing, then the current pool of servers does not handle requests quick enough. Reason may be either overloaded server or just too small of a pool_size setting.$$;
+COMMENT ON COLUMN pgbouncer.pools."maxwait_us" IS $$Microsecond part of the maximum waiting time.$$;
+COMMENT ON COLUMN pgbouncer.pools."pool_mode" IS $$The pooling mode in use.$$;
 
 /* SHOW SERVERS */
 CREATE VIEW pgbouncer.servers AS
@@ -188,6 +245,23 @@ CREATE VIEW pgbouncer.servers AS
         remote_pid integer,
         tls text
     );
+COMMENT ON COLUMN pgbouncer.servers.type IS $$S, for server.$$;
+COMMENT ON COLUMN pgbouncer.servers.user IS $$User name pgbouncer uses to connect to server.$$;
+COMMENT ON COLUMN pgbouncer.servers.database IS $$Database name.$$;
+COMMENT ON COLUMN pgbouncer.servers.state IS $$State of the pgbouncer server connection, one of active, used or idle.$$;
+COMMENT ON COLUMN pgbouncer.servers.addr IS $$IP address of PostgreSQL server.$$;
+COMMENT ON COLUMN pgbouncer.servers.port IS $$Port of PostgreSQL server.$$;
+COMMENT ON COLUMN pgbouncer.servers.local_addr IS $$Connection start address on local machine.$$;
+COMMENT ON COLUMN pgbouncer.servers.local_port IS $$Connection start port on local machine.$$;
+COMMENT ON COLUMN pgbouncer.servers.connect_time IS $$When the connection was made.$$;
+COMMENT ON COLUMN pgbouncer.servers.request_time IS $$When last request was issued.$$;
+COMMENT ON COLUMN pgbouncer.servers.wait IS $$Current waiting time in seconds.$$;
+COMMENT ON COLUMN pgbouncer.servers.wait_us IS $$Microsecond part of the current waiting time.$$;
+COMMENT ON COLUMN pgbouncer.servers.close_needed IS $$1 if the connection will be closed as soon as possible, because a configuration file reload or DNS update changed the connection information or RECONNECT was issued.$$;
+COMMENT ON COLUMN pgbouncer.servers.ptr IS $$Address of internal object for this connection. Used as unique ID.$$;
+COMMENT ON COLUMN pgbouncer.servers.link IS $$Address of client connection the server is paired with.$$;
+COMMENT ON COLUMN pgbouncer.servers.remote_pid IS $$PID of backend server process. In case connection is made over Unix socket and OS supports getting process ID info, its OS PID. Otherwise it’s extracted from cancel packet server sent, which should be PID in case server is PostgreSQL, but it’s a random number in case server it is another PgBouncer.$$;
+COMMENT ON COLUMN pgbouncer.servers.tls IS $$A string with TLS connection information, or empty if not using TLS.$$;
 
 /* SHOW SOCKETS */
 CREATE VIEW pgbouncer.sockets AS
@@ -237,6 +311,21 @@ CREATE VIEW pgbouncer.stats AS
         avg_query_time bigint,
         avg_wait_time bigint
     );
+COMMENT ON COLUMN pgbouncer.stats.database IS $$Statistics are presented per database.$$;
+COMMENT ON COLUMN pgbouncer.stats.total_xact_count IS $$Total number of SQL transactions pooled by pgbouncer.$$;
+COMMENT ON COLUMN pgbouncer.stats.total_query_count IS $$Total number of SQL queries pooled by pgbouncer.$$;
+COMMENT ON COLUMN pgbouncer.stats.total_received IS $$Total volume in bytes of network traffic received by pgbouncer.$$;
+COMMENT ON COLUMN pgbouncer.stats.total_sent IS $$Total volume in bytes of network traffic sent by pgbouncer.$$;
+COMMENT ON COLUMN pgbouncer.stats.total_xact_time IS $$Total number of microseconds spent by pgbouncer when connected to PostgreSQL in a transaction, either idle in transaction or executing queries.$$;
+COMMENT ON COLUMN pgbouncer.stats.total_query_time IS $$Total number of microseconds spent by pgbouncer when actively connected to PostgreSQL, executing queries.$$;
+COMMENT ON COLUMN pgbouncer.stats.total_wait_time IS $$Time spent by clients waiting for a server in microseconds.$$;
+COMMENT ON COLUMN pgbouncer.stats.avg_xact_count IS $$Average transactions per second in last stat period.$$;
+COMMENT ON COLUMN pgbouncer.stats.avg_query_count IS $$Average queries per second in last stat period.$$;
+COMMENT ON COLUMN pgbouncer.stats.avg_recv IS $$Average received (from clients) bytes per second.$$;
+COMMENT ON COLUMN pgbouncer.stats.avg_sent IS $$Average sent (to clients) bytes per second.$$;
+COMMENT ON COLUMN pgbouncer.stats.avg_xact_time IS $$Average transaction duration in microseconds.$$;
+COMMENT ON COLUMN pgbouncer.stats.avg_query_time IS $$Average query duration in microseconds.$$;
+COMMENT ON COLUMN pgbouncer.stats.avg_wait_time IS $$Time spent by clients waiting for a server in microseconds (average per second).$$;
 
 /* SHOW STATS_AVERAGES */
 CREATE VIEW pgbouncer.stats_averages AS
@@ -250,6 +339,14 @@ CREATE VIEW pgbouncer.stats_averages AS
         query_time bigint,
         wait_time bigint
     );
+COMMENT ON COLUMN pgbouncer.stats_averages.database IS $$Statistics are presented per database.$$;
+COMMENT ON COLUMN pgbouncer.stats_averages.xact_count IS $$Average transactions per second in last stat period.$$;
+COMMENT ON COLUMN pgbouncer.stats_averages.query_count IS $$Average queries per second in last stat period.$$;
+COMMENT ON COLUMN pgbouncer.stats_averages.bytes_received IS $$Average received (from clients) bytes per second.$$;
+COMMENT ON COLUMN pgbouncer.stats_averages.bytes_sent IS $$Average sent (to clients) bytes per second.$$;
+COMMENT ON COLUMN pgbouncer.stats_averages.xact_time IS $$Average transaction duration in microseconds.$$;
+COMMENT ON COLUMN pgbouncer.stats_averages.query_time IS $$Average query duration in microseconds.$$;
+COMMENT ON COLUMN pgbouncer.stats_averages.wait_time IS $$Time spent by clients waiting for a server in microseconds (average per second).$$;
 
 /* SHOW STATS_TOTALS */
 CREATE VIEW pgbouncer.stats_totals AS
@@ -263,6 +360,14 @@ CREATE VIEW pgbouncer.stats_totals AS
         query_time bigint,
         wait_time bigint
     );
+COMMENT ON COLUMN pgbouncer.stats_totals.database IS $$Statistics are presented per database.$$;
+COMMENT ON COLUMN pgbouncer.stats_totals.xact_count IS $$Total number of SQL transactions pooled by pgbouncer.$$;
+COMMENT ON COLUMN pgbouncer.stats_totals.query_count IS $$Total number of SQL queries pooled by pgbouncer.$$;
+COMMENT ON COLUMN pgbouncer.stats_totals.bytes_received IS $$Total volume in bytes of network traffic received by pgbouncer.$$;
+COMMENT ON COLUMN pgbouncer.stats_totals.bytes_sent IS $$Total volume in bytes of network traffic sent by pgbouncer.$$;
+COMMENT ON COLUMN pgbouncer.stats_totals.xact_time IS $$Total number of microseconds spent by pgbouncer when connected to PostgreSQL in a transaction, either idle in transaction or executing queries.$$;
+COMMENT ON COLUMN pgbouncer.stats_totals.query_time IS $$Total number of microseconds spent by pgbouncer when actively connected to PostgreSQL, executing queries.$$;
+COMMENT ON COLUMN pgbouncer.stats_totals.wait_time IS $$Time spent by clients waiting for a server in microseconds.$$;
 
 /* SHOW TOTALS */
 CREATE VIEW pgbouncer.totals AS
@@ -277,6 +382,8 @@ CREATE VIEW pgbouncer.users AS
         name text,
         pool_mode text
     );
+COMMENT ON COLUMN pgbouncer.users.name IS $$The user name$$;
+COMMENT ON COLUMN pgbouncer.users.pool_mode IS $$The user’s override pool_mode, or NULL if the default will be used instead.$$;
 
 /* SHOW VERSION */
 /* XXX Not implemented as this comes in as a NOTICE, not as a rowset. */
