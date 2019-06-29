@@ -6,29 +6,37 @@ use feature qw(:all);
 
 use DBI qw(:sql_types);
 use DBD::Pg qw(:pg_types);
+use Path::Tiny;
 
-
-my %items;
+# XXX Uncomment this after the successor of 3.8.0 has been released.
+# die "Unfortunately, $DBD::Pg::VERSION breaks this software" if $DBD::Pg::VERSION eq '3.8.0';
 
 my $source_dir = '~/pggit/pgbouncer';
 
 # First, the SHOW commands. They are more transparent.
 # Go straight to the source's mouth.
-open my $fh, '-|', qq!grep -ERo '{([^[:space:]]+), .*admin_show.*}' $source_dir/* | cut -d '"' -f 2!
-    or die "Couldn't find the admin_show commands in the source: $!";
-
-while (my $line = <$fh>) {
-    chomp $line;
-    $items{$line} = 1;
+my @items;
+my $iter = path($source_dir)->iterator({recurse => 1});
+while (my $path = $iter->()) {
+    next unless $path->is_file;
+    my @lines = $path->lines;
+    foreach my $line (@lines) {
+        next unless $line =~ /"([^"]*)", admin_show/;
+        push @items, $1;
+    }
 }
+@items = sort @items;
 
-close $fh;
-
-=begin GHOST_CODE
-my $dbh=DBI->connect('dbi:Pg:dbname=pgbouncer;host=/tmp;port=6432','pgbouncer','')
+my $dbi_dsn_pgb = $ENV{DBI_DSN_PGB} || 'dbi:Pg:dbname=pgbouncer;host=/tmp;port=6432';
+my $pgb_user = $ENV{PGB_USER} || 'pgbouncer';
+my $pgb_password = $ENV{PGB_PASSWORD} || '';
+my $dbh=DBI->connect($dbi_dsn_pgb, $pgb_user, $pgb_password)
     or die "Couldn't connect to pgbouncer: $!";
 
-my $dbh_pg=DBI->connect('dbi:Pg:dbname=postgres','postgres','')
+my $dbi_dsn_pg = $ENV{DBI_DSN_PG} || 'dbi:Pg:dbname=postgres';
+my $pg_user = $ENV{PG_USER} || 'postgres';
+my $pg_password = $ENV{PG_PASSWORD} || '';
+my $dbh_pg=DBI->connect($dbi_dsn_pg, $pg_user, $pg_password)
     or die "Couldn't connect to PostgreSQL: $!";
 
 sub fix_names {
@@ -50,7 +58,7 @@ sub fix_names {
     }
 }
 
-foreach my $item(sort keys %items) {
+foreach my $item(@items) {
     my $sth = $dbh->prepare("SHOW $item");
     $sth->execute;
     my $sth_pg = $dbh_pg->prepare("VALUES(pg_catalog.quote_ident(?))");
@@ -87,25 +95,24 @@ foreach my $item(sort keys %items) {
 $dbh->disconnect;
 $dbh_pg->disconnect;
 
-=end GHOST_CODE
-=cut
-
 # Now, the rest:
-open $fh, '-|', qq!grep -ERo '{([^[:space:]]+), .*admin_cmd.*}' $source_dir/* | cut -d '"' -f 2 | grep -v show!
-    or die "Couldn't find the rest of the commands in the source: $!";
-
-%items=();
-
-while (my $line = <$fh>) {
-    chomp $line;
-    next if $line eq 'select';
-    $items{$line}=1;
+@items = ();
+$iter = path($source_dir)->iterator({recurse => 1});
+while (my $path = $iter->()) {
+    next unless $path->is_file;
+    my @lines = $path->lines;
+    foreach my $line (@lines) {
+        next unless $line =~ /.*"([^"]*)", admin_cmd/;
+        next if $1 =~ /(show|select)/;
+        push @items, $1;
+    }
 }
+@items = sort @items;
 
 my @no_params = qw(suspend shutdown reload);
 my @non_optional_params = qw(disable enable kill);
 
-foreach my $item (sort keys %items) {
+foreach my $item (@items) {
     if (grep(/^$item$/, @no_params)) {
         say <<~EOT
         /* @{[uc($item)]} */
