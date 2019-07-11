@@ -8,13 +8,13 @@ use DBI qw(:sql_types);
 use DBD::Pg qw(:pg_types);
 use Path::Tiny;
 
-# XXX Uncomment this after the successor of 3.8.0 has been released.
-# die "Unfortunately, $DBD::Pg::VERSION breaks this software" if $DBD::Pg::VERSION eq '3.8.0';
+die "Unfortunately, DBD::Pg $DBD::Pg::VERSION breaks this software"
+    if $DBD::Pg::VERSION eq '3.8.0';
 
-my $source_dir = '~/pggit/pgbouncer';
+my $source_dir = $ENV{PGB_SOURCE} || '~/pggit/pgbouncer';
 
-# First, the SHOW commands. They are more transparent.
 # Go straight to the source's mouth.
+# First, the SHOW commands.
 my @items;
 my $iter = path($source_dir)->iterator({recurse => 1});
 while (my $path = $iter->()) {
