@@ -75,7 +75,7 @@ foreach my $item(@items) {
         push @cols, join(" ", $cn[0], $t);
     }
 
-    if ( $#cols > 0 ) {
+    if ( $#cols >= 0 ) {
         say <<~EOT;
         /* SHOW @{[uc($item)]} */
         CREATE VIEW pgbouncer.$item AS
