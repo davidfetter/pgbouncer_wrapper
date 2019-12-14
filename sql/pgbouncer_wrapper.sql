@@ -386,7 +386,10 @@ COMMENT ON COLUMN pgbouncer.users.name IS $$The user name$$;
 COMMENT ON COLUMN pgbouncer.users.pool_mode IS $$The user’s override pool_mode, or NULL if the default will be used instead.$$;
 
 /* SHOW VERSION */
-/* XXX Not implemented as this comes in as a NOTICE, not as a rowset. */
+CREATE VIEW pgbouncer.version AS
+    SELECT * FROM dblink('pgbouncer', 'show version') AS _(
+        version text
+    );
 
 /* DISABLE db */
 CREATE FUNCTION pgbouncer.disable(db TEXT)
