@@ -48,6 +48,30 @@ CREATE VIEW pgbouncer.active_sockets AS
         pkt_avail integer,
         send_avail integer
     );
+COMMENT ON COLUMN pgbouncer.active_sockets."type" IS $$C, for client.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."user" IS $$Client connected user.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."database" IS $$Database name.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."state" IS $$State of the client connection, one of active, used, waiting or idle.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."addr" IS $$IP address of client.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."port" IS $$Port client is connected to.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."local_addr" IS $$Connection end address on local machine.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."local_port" IS $$Connection end port on local machine.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."connect_time" IS $$Timestamp of connect time.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."request_time" IS $$Timestamp of latest client request.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."wait" IS $$Current waiting time in seconds.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."wait_us" IS $$Microsecond part of the current waiting time.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."close_needed" IS $$Is close_needed set? 0 for no.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."ptr" IS $$Address of internal object for this connection. Used as unique ID.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."link" IS $$Address of server connection the client is paired with.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."remote_pid" IS $$Process ID, in case client connects over Unix socket and OS supports getting it.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."tls" IS $$A string with TLS connection information, or empty if not using TLS.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."recv_pos" IS $$See recv_pos in include/iobuf.h.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."pkt_pos" IS $$See parse_pos in include/iobuf.h.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."pkt_remain" IS $$See the SBuf struct in include/sbuf.h.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."send_pos" IS $$See send_pos in include/sbuf.h.h.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."send_remain" IS $$Apparently always 0$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."pkt_avail" IS $$See socket_row() in admin.c$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."send_avail" IS $$See socket_row() in admin.c$$;
 
 /* SHOW CLIENTS */
 CREATE VIEW pgbouncer.clients AS
@@ -167,7 +191,19 @@ CREATE VIEW pgbouncer.fds AS
         password text,
         scram_client_key bytea,
         scram_server_key bytea
-    );
+    )
+    WHERE NOT EXISTS (SELECT 1 FROM pgbouncer.databases WHERE name <> 'pgbouncer' AND paused=0 AND disabled=0);
+COMMENT ON VIEW pgbouncer.fds IS $$Internal command - shows list of file descriptors in use with internal state attached to them.
+
+When the connected user has the user name “pgbouncer”, connects through the
+Unix socket and has same the UID as the running process, the actual FDs are
+passed over the connection. This mechanism is used to do an online restart.
+Note: This does not work on Windows.
+
+Because the underlying command also blocks the internal event loop, this
+view will not call that command and hence will only return rows when all
+non-pgbouncer databases are at least one of paused, disabled.$$;
+
 COMMENT ON COLUMN pgbouncer.fds."fd" IS $$File descriptor numeric value.$$;
 COMMENT ON COLUMN pgbouncer.fds."task" IS $$One of pooler, client or server.$$;
 COMMENT ON COLUMN pgbouncer.fds."user" IS $$User of the connection using the FD.$$;
@@ -186,6 +222,33 @@ CREATE VIEW pgbouncer.lists AS
         list text,
         items integer
     );
+COMMENT ON VIEW pgbouncer.lists IS $$Show following internal information, in columns (not rows):
+
+databases
+    Count of databases.
+users
+    Count of users.
+pools
+    Count of pools.
+free_clients
+    Count of free clients.
+used_clients
+    Count of used clients.
+login_clients
+    Count of clients in login state.
+free_servers
+    Count of free servers.
+used_servers
+    Count of used servers.
+dns_names
+    Count of DNS names in the cache.
+dns_zones
+    Count of DNS zones in the cache.
+dns_queries
+    Count of in-flight DNS queries.
+dns_pending
+    not used
+$$;
 
 /* SHOW MEM */
 CREATE VIEW pgbouncer.mem AS
@@ -196,6 +259,7 @@ CREATE VIEW pgbouncer.mem AS
         free integer,
         memtotal integer
     );
+COMMENT ON VIEW pgbouncer.mem IS $$Shows low-level information about the current sizes of various internal memory allocations. The information presented is subject to change.$$;
 
 /* SHOW POOLS */
 CREATE VIEW pgbouncer.pools AS
@@ -293,6 +357,29 @@ CREATE VIEW pgbouncer.sockets AS
         pkt_avail integer,
         send_avail integer
     );
+COMMENT ON COLUMN pgbouncer.sockets."type" IS $$C, for client.$$;
+COMMENT ON COLUMN pgbouncer.sockets."user" IS $$Client connected user.$$;
+COMMENT ON COLUMN pgbouncer.sockets."database" IS $$Database name.$$;
+COMMENT ON COLUMN pgbouncer.sockets."state" IS $$State of the client connection, one of active, used, waiting or idle.$$;
+COMMENT ON COLUMN pgbouncer.sockets."addr" IS $$IP address of client.$$;
+COMMENT ON COLUMN pgbouncer.sockets."port" IS $$Port client is connected to.$$;
+COMMENT ON COLUMN pgbouncer.sockets."local_addr" IS $$Connection end address on local machine.$$;
+COMMENT ON COLUMN pgbouncer.sockets."local_port" IS $$Connection end port on local machine.$$;
+COMMENT ON COLUMN pgbouncer.sockets."connect_time" IS $$Timestamp of connect time.$$;
+COMMENT ON COLUMN pgbouncer.sockets."request_time" IS $$Timestamp of latest client request.$$;
+COMMENT ON COLUMN pgbouncer.sockets."wait" IS $$Current waiting time in seconds.$$;
+COMMENT ON COLUMN pgbouncer.sockets."wait_us" IS $$Microsecond part of the current waiting time.$$;
+COMMENT ON COLUMN pgbouncer.sockets."close_needed" IS $$Is close_needed set? 0 for no.$$;
+COMMENT ON COLUMN pgbouncer.sockets."ptr" IS $$Address of internal object for this connection. Used as unique ID.$$;
+COMMENT ON COLUMN pgbouncer.sockets."link" IS $$Address of server connection the client is paired with.$$;
+COMMENT ON COLUMN pgbouncer.sockets."remote_pid" IS $$Process ID, in case client connects over Unix socket and OS supports getting it.$$;
+COMMENT ON COLUMN pgbouncer.sockets."tls" IS $$A string with TLS connection information, or empty if not using TLS.$$;
+COMMENT ON COLUMN pgbouncer.sockets."recv_pos" IS $$See recv_pos in include/iobuf.h.$$;
+COMMENT ON COLUMN pgbouncer.sockets."pkt_pos" IS $$See parse_pos in include/iobuf.h.$$;
+COMMENT ON COLUMN pgbouncer.sockets."send_pos" IS $$See send_pos in include/sbuf.h.h.$$;
+COMMENT ON COLUMN pgbouncer.sockets."send_remain" IS $$Apparently always 0$$;
+COMMENT ON COLUMN pgbouncer.sockets."pkt_avail" IS $$See socket_row() in admin.c$$;
+COMMENT ON COLUMN pgbouncer.sockets."send_avail" IS $$See socket_row() in admin.c$$;
 
 /* SHOW STATS */
 CREATE VIEW pgbouncer.stats AS
@@ -380,6 +467,7 @@ CREATE VIEW pgbouncer.totals AS
 
 /* SHOW USERS */
 CREATE VIEW pgbouncer.users AS
+
     SELECT * FROM dblink('pgbouncer', 'show users') AS _(
         name text,
         pool_mode text
@@ -392,6 +480,7 @@ CREATE VIEW pgbouncer.version AS
     SELECT * FROM dblink('pgbouncer', 'show version') AS _(
         version text
     );
+COMMENT ON COLUMN pgbouncer.version.version IS $$Version number as text$$;
 
 /* DISABLE db */
 CREATE FUNCTION pgbouncer.disable(db TEXT)
