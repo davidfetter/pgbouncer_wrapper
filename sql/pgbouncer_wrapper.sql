@@ -164,7 +164,9 @@ CREATE VIEW pgbouncer.fds AS
         std_strings text,
         datestyle text,
         timezone text,
-        password text
+        password text,
+        scram_client_key bytea,
+        scram_server_key bytea
     );
 COMMENT ON COLUMN pgbouncer.fds."fd" IS $$File descriptor numeric value.$$;
 COMMENT ON COLUMN pgbouncer.fds."task" IS $$One of pooler, client or server.$$;
