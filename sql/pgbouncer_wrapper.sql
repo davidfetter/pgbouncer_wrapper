@@ -117,10 +117,12 @@ CREATE VIEW pgbouncer.config AS
     SELECT * FROM dblink('pgbouncer', 'show config') AS _(
         key text,
         value text,
+        "default" text,
         changeable boolean
     );
 COMMENT ON COLUMN pgbouncer.config."key" IS $$Configuration variable name$$;
 COMMENT ON COLUMN pgbouncer.config."value" IS $$Configuration value$$;
+COMMENT ON COLUMN pgbouncer.config."default" IS $$Default value$$;
 COMMENT ON COLUMN pgbouncer.config."changeable" IS $$Either yes or no, shows if the variable can be changed while running. If no, the variable can be changed only at boot time. Use SET to change a variable at run time.$$;
 
 /* SHOW DATABASES */
