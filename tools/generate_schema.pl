@@ -131,7 +131,7 @@ foreach my $item (@items) {
         RETURNS VOID
         LANGUAGE sql
         AS \$\$
-            SELECT dblink_exec('pgbouncer', format('%s %s', '$item', db));
+            SELECT dblink_exec('pgbouncer', pg_catalog.format('%s%s', '$item', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
         \$\$;
         EOT
     }
@@ -143,7 +143,7 @@ foreach my $item (@items) {
         LANGUAGE sql
         AS \$\$
         SELECT
-            dblink_exec('pgbouncer', format('%s%s', '$item', COALESCE(' ' || db, '')));
+            dblink_exec('pgbouncer', pg_catalog.format('%s%s', '$item', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
         \$\$;
         EOT
     }
@@ -155,6 +155,6 @@ RETURNS VOID
 LANGUAGE SQL
 AS $$
 SELECT
-    dblink_exec('pgbouncer', format('SET %s=%L', key, value));
+    dblink_exec('pgbouncer', pg_catalog.format('SET %s=%L', key, value));
 $$;
 EOT

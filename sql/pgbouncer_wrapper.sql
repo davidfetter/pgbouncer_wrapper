@@ -1,8 +1,6 @@
 /*
  * Author: David Fetter <david@fetter.org>
  * Created at: 2015-03-31 07:18:40 -0700
- *
- * Update for pgbouncer v1.9.0: Michael Vitale <michaeldba@sqlexec.com>
  */
 
 -- customize start
@@ -194,7 +192,14 @@ CREATE VIEW pgbouncer.fds AS
         scram_client_key bytea,
         scram_server_key bytea
     )
-    WHERE NOT EXISTS (SELECT 1 FROM pgbouncer.databases WHERE name <> 'pgbouncer' AND paused=0 AND disabled=0);
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM pgbouncer.databases
+        WHERE
+            name <> 'pgbouncer' AND
+            paused=0 AND
+            disabled=0
+    );
 COMMENT ON VIEW pgbouncer.fds IS $$Internal command - shows list of file descriptors in use with internal state attached to them.
 
 When the connected user has the user name “pgbouncer”, connects through the
@@ -469,7 +474,6 @@ CREATE VIEW pgbouncer.totals AS
 
 /* SHOW USERS */
 CREATE VIEW pgbouncer.users AS
-
     SELECT * FROM dblink('pgbouncer', 'show users') AS _(
         name text,
         pool_mode text
@@ -489,7 +493,7 @@ CREATE FUNCTION pgbouncer.disable(db TEXT)
 RETURNS VOID
 LANGUAGE sql
 AS $$
-    SELECT dblink_exec('pgbouncer', format('%s %s', 'disable', db));
+    SELECT dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'disable', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
 COMMENT ON FUNCTION pgbouncer.disable(db TEXT) IS $$Reject all new client connections on the given database.$$;
 
@@ -498,7 +502,7 @@ CREATE FUNCTION pgbouncer.enable(db TEXT)
 RETURNS VOID
 LANGUAGE sql
 AS $$
-    SELECT dblink_exec('pgbouncer', format('%s %s', 'enable', db));
+    SELECT dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'enable', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
 COMMENT ON FUNCTION pgbouncer.enable(db TEXT) IS $$Allow new client connections after a previous DISABLE command.$$;
 
@@ -507,7 +511,7 @@ CREATE FUNCTION pgbouncer.kill(db TEXT)
 RETURNS VOID
 LANGUAGE sql
 AS $$
-    SELECT dblink_exec('pgbouncer', format('%s %s', 'kill', db));
+    SELECT dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'kill', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
 COMMENT ON FUNCTION pgbouncer.kill(db TEXT) IS $$Immediately drop all client and server connections on given database.
 
@@ -519,7 +523,7 @@ RETURNS VOID
 LANGUAGE sql
 AS $$
 SELECT
-    dblink_exec('pgbouncer', format('%s%s', 'pause', COALESCE(' ' || db, '')));
+    dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'pause', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
 COMMENT ON FUNCTION pgbouncer.pause(db TEXT) IS $$PgBouncer tries to disconnect from all servers, first waiting for all queries to
 complete. The command will not return before all queries are finished. To be
@@ -535,7 +539,7 @@ RETURNS VOID
 LANGUAGE sql
 AS $$
 SELECT
-    dblink_exec('pgbouncer', format('%s%s', 'reconnect', COALESCE(' ' || db, '')));
+    dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'reconnect', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
 COMMENT ON FUNCTION pgbouncer.reconnect(db TEXT) IS $$Close each open server connection for the given database, or all databases,
 after it is released (according to the pooling mode), even if its lifetime is
@@ -579,7 +583,7 @@ RETURNS VOID
 LANGUAGE sql
 AS $$
 SELECT
-    dblink_exec('pgbouncer', format('%s%s', 'resume', COALESCE(' ' || db, '')));
+    dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'resume', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
 COMMENT ON FUNCTION pgbouncer.resume(db TEXT) IS $$Resume work from previous KILL, PAUSE, or SUSPEND command.$$;
 
@@ -611,7 +615,7 @@ RETURNS VOID
 LANGUAGE sql
 AS $$
 SELECT
-    dblink_exec('pgbouncer', format('%s%s', 'wait_close', COALESCE(' ' || db, '')));
+    dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'wait_close', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
 COMMENT ON FUNCTION pgbouncer.wait_close(db TEXT) IS $$Wait until all server connections, either of the specified database or of all
 databases, have cleared the “close_needed” state (see SHOW SERVERS). This can be
@@ -624,6 +628,6 @@ RETURNS VOID
 LANGUAGE SQL
 AS $$
 SELECT
-    dblink_exec('pgbouncer', format('SET %s=%L', key, value));
+    dblink_exec('pgbouncer', pg_catalog.format('SET %s=%L', key, value));
 $$;
 COMMENT ON FUNCTION pgbouncer."set"(key TEXT, value TEXT) IS $$Changes a configuration setting (see also the config VIEW).$$;
