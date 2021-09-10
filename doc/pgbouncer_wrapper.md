@@ -33,4 +33,4 @@ Author
 Copyright
 ---------
 
-  Copyright (c) 2015-2020 David Fetter &lt;david@fetter.org&gt;.
+  Copyright (c) 2015-2021 David Fetter &lt;david@fetter.org&gt;.
