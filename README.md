@@ -1,7 +1,7 @@
 pgbouncer_wrapper
 =================
 
-This is a wrapper around Peter Eisentraut's excellent [post](http://peter.eisentraut.org/blog/2015/03/25/retrieving-pgbouncer-statistics-via-dblink/)
+This project was originally inspired by Peter Eisentraut's excellent [post](http://peter.eisentraut.org/blog/2015/03/25/retrieving-pgbouncer-statistics-via-dblink/)
 
 If you've ever wanted to run SQL queries against pgbouncer's SHOW output, this
 is a handy way to do just that.
