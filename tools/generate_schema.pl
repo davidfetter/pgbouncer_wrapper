@@ -44,11 +44,11 @@ sub fix_names {
     if ($type eq "int4") {
         return "integer";
     }
-    elsif ($type eq "int8") {
+    elsif ($type eq "int8" or $type eq "numeric") {
         return "bigint";
     }
     elsif ($name =~ m/_time$/) {
-        return "timestamp";
+        return "timestamp with time zone";
     }
     elsif ($name eq 'changeable') {
         return "boolean";
