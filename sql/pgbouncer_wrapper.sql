@@ -29,8 +29,8 @@ CREATE VIEW pgbouncer.active_sockets AS
         port integer,
         local_addr text,
         local_port integer,
-        connect_time timestamp,
-        request_time timestamp,
+        connect_time timestamp with time zone,
+        request_time timestamp with time zone,
         wait integer,
         wait_us integer,
         close_needed integer,
@@ -82,8 +82,8 @@ CREATE VIEW pgbouncer.clients AS
         port integer,
         local_addr text,
         local_port integer,
-        connect_time timestamp,
-        request_time timestamp,
+        connect_time timestamp with time zone,
+        request_time timestamp with time zone,
         wait integer,
         wait_us integer,
         close_needed integer,
@@ -132,6 +132,7 @@ CREATE VIEW pgbouncer.databases AS
         database text,
         force_user text,
         pool_size integer,
+        min_pool_size integer,
         reserve_pool integer,
         pool_mode text,
         max_connections integer,
@@ -145,6 +146,7 @@ COMMENT ON COLUMN pgbouncer.databases."port" IS $$Port pgbouncer connects to.$$;
 COMMENT ON COLUMN pgbouncer.databases."database" IS $$Actual database name pgbouncer connects to.$$;
 COMMENT ON COLUMN pgbouncer.databases."force_user" IS $$When user is part of the connection string, the connection between pgbouncer and PostgreSQL is forced to the given user, whatever the client user.$$;
 COMMENT ON COLUMN pgbouncer.databases."pool_size" IS $$Maximum number of server connections.$$;
+COMMENT ON COLUMN pgbouncer.databases."min_pool_size" IS $$Minimum number of server connections.$$;
 COMMENT ON COLUMN pgbouncer.databases."pool_mode" IS $$The database’s override pool_mode, or NULL if the default will be used instead.$$;
 COMMENT ON COLUMN pgbouncer.databases."max_connections" IS $$Maximum number of allowed connections for this database, as set by max_db_connections, either globally or per database.$$;
 COMMENT ON COLUMN pgbouncer.databases."current_connections" IS $$Current number of connections for this database.$$;
@@ -275,6 +277,7 @@ CREATE VIEW pgbouncer.pools AS
         "user" text,
         cl_active integer,
         cl_waiting integer,
+        cl_cancel_req integer,
         sv_active integer,
         sv_idle integer,
         sv_used integer,
@@ -288,6 +291,7 @@ COMMENT ON COLUMN pgbouncer.pools."database" IS $$Database name.$$;
 COMMENT ON COLUMN pgbouncer.pools."user" IS $$User name.$$;
 COMMENT ON COLUMN pgbouncer.pools."cl_active" IS $$Client connections that are linked to server connection and can process queries.$$;
 COMMENT ON COLUMN pgbouncer.pools."cl_waiting" IS $$Client connections have sent queries but have not yet got a server connection.$$;
+COMMENT ON COLUMN pgbouncer.pools."cl_cancel_req" IS $$Client connections that have not forwarded query cancellations to the server yet.$$;
 COMMENT ON COLUMN pgbouncer.pools."sv_active" IS $$Server connections that linked to client.$$;
 COMMENT ON COLUMN pgbouncer.pools."sv_idle" IS $$Server connections that unused and immediately usable for client queries.$$;
 COMMENT ON COLUMN pgbouncer.pools."sv_used" IS $$Server connections that have been idle more than server_check_delay, so they needs server_check_query to run on it before it can be used.$$;
@@ -308,8 +312,8 @@ CREATE VIEW pgbouncer.servers AS
         port integer,
         local_addr text,
         local_port integer,
-        connect_time timestamp,
-        request_time timestamp,
+        connect_time timestamp with time zone,
+        request_time timestamp with time zone,
         wait integer,
         wait_us integer,
         close_needed integer,
@@ -347,8 +351,8 @@ CREATE VIEW pgbouncer.sockets AS
         port integer,
         local_addr text,
         local_port integer,
-        connect_time timestamp,
-        request_time timestamp,
+        connect_time timestamp with time zone,
+        request_time timestamp with time zone,
         wait integer,
         wait_us integer,
         close_needed integer,
