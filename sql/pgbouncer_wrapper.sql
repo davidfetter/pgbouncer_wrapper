@@ -3,49 +3,48 @@
  * Created at: 2015-03-31 07:18:40 -0700
  */
 
--- customize start
-CREATE SERVER pgbouncer FOREIGN DATA WRAPPER dblink_fdw OPTIONS (
-    host '/tmp',
-    port '6432',
-    dbname 'pgbouncer'
-);
-
-CREATE USER MAPPING FOR PUBLIC SERVER pgbouncer OPTIONS (
-    user 'pgbouncer'
-);
--- customize stop
-
 CREATE SCHEMA pgbouncer;
+
+CREATE TABLE pgbouncer.pgbouncer_config (
+    bouncer_name TEXT PRIMARY KEY,
+    connect_string TEXT,
+    active BOOLEAN NOT NULL DEFAULT true
+);
 
 
 /* SHOW ACTIVE_SOCKETS */
 CREATE VIEW pgbouncer.active_sockets AS
-    SELECT * FROM dblink('pgbouncer', 'show active_sockets') AS _(
-        type text,
-        "user" text,
-        database text,
-        state text,
-        addr text,
-        port integer,
-        local_addr text,
-        local_port integer,
-        connect_time timestamp,
-        request_time timestamp,
-        wait integer,
-        wait_us integer,
-        close_needed integer,
-        ptr text,
-        link text,
-        remote_pid integer,
-        tls text,
-        recv_pos integer,
-        pkt_pos integer,
-        pkt_remain integer,
-        send_pos integer,
-        send_remain integer,
-        pkt_avail integer,
-        send_avail integer
-    );
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show active_sockets') AS _(
+            type text,
+            "user" text,
+            database text,
+            state text,
+            addr text,
+            port integer,
+            local_addr text,
+            local_port integer,
+            connect_time timestamp,
+            request_time timestamp,
+            wait integer,
+            wait_us integer, close_needed integer,
+            ptr text,
+            link text,
+            remote_pid integer,
+            tls text,
+            recv_pos integer,
+            pkt_pos integer,
+            pkt_remain integer,
+            send_pos integer,
+            send_remain integer,
+            pkt_avail integer,
+            send_avail integer
+        )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.active_sockets."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."type" IS $$C, for client.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."user" IS $$Client connected user.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."database" IS $$Database name.$$;
@@ -73,25 +72,31 @@ COMMENT ON COLUMN pgbouncer.active_sockets."send_avail" IS $$See socket_row() in
 
 /* SHOW CLIENTS */
 CREATE VIEW pgbouncer.clients AS
-    SELECT * FROM dblink('pgbouncer', 'show clients') AS _(
-        type text,
-        "user" text,
-        database text,
-        state text,
-        addr text,
-        port integer,
-        local_addr text,
-        local_port integer,
-        connect_time timestamp,
-        request_time timestamp,
-        wait integer,
-        wait_us integer,
-        close_needed integer,
-        ptr text,
-        link text,
-        remote_pid integer,
-        tls text
-    );
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show clients') AS _(
+            type text,
+            "user" text,
+            database text,
+            state text,
+            addr text,
+            port integer,
+            local_addr text,
+            local_port integer,
+            connect_time timestamp,
+            request_time timestamp,
+            wait integer,
+            wait_us integer,
+            close_needed integer,
+            ptr text,
+            link text,
+            remote_pid integer,
+            tls text
+        )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.clients."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.clients."type" IS $$C, for client.$$;
 COMMENT ON COLUMN pgbouncer.clients."user" IS $$Client connected user.$$;
 COMMENT ON COLUMN pgbouncer.clients."database" IS $$Database name.$$;
@@ -112,12 +117,18 @@ COMMENT ON COLUMN pgbouncer.clients."tls" IS $$A string with TLS connection info
 
 /* SHOW CONFIG */
 CREATE VIEW pgbouncer.config AS
-    SELECT * FROM dblink('pgbouncer', 'show config') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show config') AS _(
         key text,
         value text,
         "default" text,
         changeable boolean
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.config."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.config."key" IS $$Configuration variable name$$;
 COMMENT ON COLUMN pgbouncer.config."value" IS $$Configuration value$$;
 COMMENT ON COLUMN pgbouncer.config."default" IS $$Default value$$;
@@ -125,7 +136,11 @@ COMMENT ON COLUMN pgbouncer.config."changeable" IS $$Either yes or no, shows if 
 
 /* SHOW DATABASES */
 CREATE VIEW pgbouncer.databases AS
-    SELECT * FROM dblink('pgbouncer', 'show databases') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show databases') AS _(
         name text,
         host text,
         port integer,
@@ -138,7 +153,9 @@ CREATE VIEW pgbouncer.databases AS
         current_connections integer,
         paused integer,
         disabled integer
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.databases."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.databases."name" IS $$Name of configured database entry.$$;
 COMMENT ON COLUMN pgbouncer.databases."host" IS $$Host pgbouncer connects to.$$;
 COMMENT ON COLUMN pgbouncer.databases."port" IS $$Port pgbouncer connects to.$$;
@@ -153,29 +170,45 @@ COMMENT ON COLUMN pgbouncer.databases."disabled" IS $$1 if this database is curr
 
 /* SHOW DNS_HOSTS */
 CREATE VIEW pgbouncer.dns_hosts AS
-    SELECT * FROM dblink('pgbouncer', 'show dns_hosts') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show dns_hosts') AS _(
         hostname text,
         ttl bigint,
         addrs text
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.dns_hosts."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.dns_hosts."hostname" IS $$Host name.$$;
 COMMENT ON COLUMN pgbouncer.dns_hosts."ttl" IS $$How many seconds until next lookup.$$;
 COMMENT ON COLUMN pgbouncer.dns_hosts."addrs" IS $$Comma separated list of addresses.$$;
 
 /* SHOW DNS_ZONES */
 CREATE VIEW pgbouncer.dns_zones AS
-    SELECT * FROM dblink('pgbouncer', 'show dns_zones') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show dns_zones') AS _(
         zonename text,
         serial bigint,
         count integer
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.dns_zones."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.dns_zones."zonename" IS $$Zone name.$$;
 COMMENT ON COLUMN pgbouncer.dns_zones."serial" IS $$Current serial.$$;
 COMMENT ON COLUMN pgbouncer.dns_zones."count" IS $$Host names belonging to this zone.$$;
 
 /* SHOW FDS */
 CREATE VIEW pgbouncer.fds AS
-    SELECT * FROM dblink('pgbouncer', 'show fds') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show fds') AS _(
         fd integer,
         task text,
         "user" text,
@@ -211,6 +244,7 @@ Because the underlying command also blocks the internal event loop, this
 view will not call that command and hence will only return rows when all
 non-pgbouncer databases are at least one of paused, disabled.$$;
 
+COMMENT ON COLUMN pgbouncer.fds."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.fds."fd" IS $$File descriptor numeric value.$$;
 COMMENT ON COLUMN pgbouncer.fds."task" IS $$One of pooler, client or server.$$;
 COMMENT ON COLUMN pgbouncer.fds."user" IS $$User of the connection using the FD.$$;
@@ -225,52 +259,55 @@ COMMENT ON COLUMN pgbouncer.fds."link" IS $$fd for corresponding server/client. 
 
 /* SHOW LISTS */
 CREATE VIEW pgbouncer.lists AS
-    SELECT * FROM dblink('pgbouncer', 'show lists') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show lists') AS _(
         list text,
         items integer
-    );
-COMMENT ON VIEW pgbouncer.lists IS $$Show following internal information, in columns (not rows):
+    )
+    WHERE c.active;
+COMMENT ON VIEW pgbouncer.lists IS $$Show following internal information$$;
 
-databases
-    Count of databases.
-users
-    Count of users.
-pools
-    Count of pools.
-free_clients
-    Count of free clients.
-used_clients
-    Count of used clients.
-login_clients
-    Count of clients in login state.
-free_servers
-    Count of free servers.
-used_servers
-    Count of used servers.
-dns_names
-    Count of DNS names in the cache.
-dns_zones
-    Count of DNS zones in the cache.
-dns_queries
-    Count of in-flight DNS queries.
-dns_pending
-    not used
-$$;
+COMMENT ON COLUMN pgbouncer.lists."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
+COMMENT ON COLUMN pgbouncer.lists.databases IS $$Count of databases.$$;
+COMMENT ON COLUMN pgbouncer.lists.users IS $$Count of users.$$;
+COMMENT ON COLUMN pgbouncer.lists.pools IS $$Count of pools.$$;
+COMMENT ON COLUMN pgbouncer.lists.free_clients IS $$Count of free clients.$$;
+COMMENT ON COLUMN pgbouncer.lists.used_clients IS $$Count of used clients.$$;
+COMMENT ON COLUMN pgbouncer.lists.login_clients IS $$Count of clients in login state.$$;
+COMMENT ON COLUMN pgbouncer.lists.free_servers IS $$Count of free servers.$$;
+COMMENT ON COLUMN pgbouncer.lists.used_servers IS $$Count of used servers.$$;
+COMMENT ON COLUMN pgbouncer.lists.dns_names IS $$Count of DNS names in the cache.$$;
+COMMENT ON COLUMN pgbouncer.lists.dns_zones IS $$Count of DNS zones in the cache.$$;
+COMMENT ON COLUMN pgbouncer.lists.dns_queries IS $$Count of in-flight DNS queries.$$;
+COMMENT ON COLUMN pgbouncer.lists.dns_pending IS $$not used$$;
 
 /* SHOW MEM */
 CREATE VIEW pgbouncer.mem AS
-    SELECT * FROM dblink('pgbouncer', 'show mem') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show mem') AS _(
         name text,
         size integer,
         used integer,
         free integer,
         memtotal integer
-    );
+    )
+    WHERE c.active;
 COMMENT ON VIEW pgbouncer.mem IS $$Shows low-level information about the current sizes of various internal memory allocations. The information presented is subject to change.$$;
+COMMENT ON COLUMN pgbouncer.mem."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 
 /* SHOW POOLS */
 CREATE VIEW pgbouncer.pools AS
-    SELECT * FROM dblink('pgbouncer', 'show pools') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show pools') AS _(
         database text,
         "user" text,
         cl_active integer,
@@ -283,7 +320,10 @@ CREATE VIEW pgbouncer.pools AS
         maxwait integer,
         maxwait_us integer,
         pool_mode text
-    );
+    )
+    WHERE c.active;
+COMMENT ON VIEW pgbouncer.pools IS $$A new pool entry is made for each combination of (database, user).$$
+COMMENT ON COLUMN pgbouncer.pools."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.pools."database" IS $$Database name.$$;
 COMMENT ON COLUMN pgbouncer.pools."user" IS $$User name.$$;
 COMMENT ON COLUMN pgbouncer.pools."cl_active" IS $$Client connections that are linked to server connection and can process queries.$$;
@@ -299,7 +339,11 @@ COMMENT ON COLUMN pgbouncer.pools."pool_mode" IS $$The pooling mode in use.$$;
 
 /* SHOW SERVERS */
 CREATE VIEW pgbouncer.servers AS
-    SELECT * FROM dblink('pgbouncer', 'show servers') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show servers') AS _(
         type text,
         "user" text,
         database text,
@@ -317,7 +361,9 @@ CREATE VIEW pgbouncer.servers AS
         link text,
         remote_pid integer,
         tls text
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.servers."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.servers.type IS $$S, for server.$$;
 COMMENT ON COLUMN pgbouncer.servers.user IS $$User name pgbouncer uses to connect to server.$$;
 COMMENT ON COLUMN pgbouncer.servers.database IS $$Database name.$$;
@@ -338,7 +384,11 @@ COMMENT ON COLUMN pgbouncer.servers.tls IS $$A string with TLS connection inform
 
 /* SHOW SOCKETS */
 CREATE VIEW pgbouncer.sockets AS
-    SELECT * FROM dblink('pgbouncer', 'show sockets') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show sockets') AS _(
         type text,
         "user" text,
         database text,
@@ -363,7 +413,9 @@ CREATE VIEW pgbouncer.sockets AS
         send_remain integer,
         pkt_avail integer,
         send_avail integer
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.sockets."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.sockets."type" IS $$C, for client.$$;
 COMMENT ON COLUMN pgbouncer.sockets."user" IS $$Client connected user.$$;
 COMMENT ON COLUMN pgbouncer.sockets."database" IS $$Database name.$$;
@@ -390,7 +442,11 @@ COMMENT ON COLUMN pgbouncer.sockets."send_avail" IS $$See socket_row() in admin.
 
 /* SHOW STATS */
 CREATE VIEW pgbouncer.stats AS
-    SELECT * FROM dblink('pgbouncer', 'show stats') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show stats') AS _(
         database text,
         total_xact_count bigint,
         total_query_count bigint,
@@ -406,7 +462,9 @@ CREATE VIEW pgbouncer.stats AS
         avg_xact_time bigint,
         avg_query_time bigint,
         avg_wait_time bigint
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.stats."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.stats.database IS $$Statistics are presented per database.$$;
 COMMENT ON COLUMN pgbouncer.stats.total_xact_count IS $$Total number of SQL transactions pooled by pgbouncer.$$;
 COMMENT ON COLUMN pgbouncer.stats.total_query_count IS $$Total number of SQL queries pooled by pgbouncer.$$;
@@ -425,7 +483,11 @@ COMMENT ON COLUMN pgbouncer.stats.avg_wait_time IS $$Time spent by clients waiti
 
 /* SHOW STATS_AVERAGES */
 CREATE VIEW pgbouncer.stats_averages AS
-    SELECT * FROM dblink('pgbouncer', 'show stats_averages') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show stats_averages') AS _(
         database text,
         xact_count bigint,
         query_count bigint,
@@ -434,7 +496,9 @@ CREATE VIEW pgbouncer.stats_averages AS
         xact_time bigint,
         query_time bigint,
         wait_time bigint
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.stats_averages."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.stats_averages.database IS $$Statistics are presented per database.$$;
 COMMENT ON COLUMN pgbouncer.stats_averages.xact_count IS $$Average transactions per second in last stat period.$$;
 COMMENT ON COLUMN pgbouncer.stats_averages.query_count IS $$Average queries per second in last stat period.$$;
@@ -446,7 +510,11 @@ COMMENT ON COLUMN pgbouncer.stats_averages.wait_time IS $$Time spent by clients 
 
 /* SHOW STATS_TOTALS */
 CREATE VIEW pgbouncer.stats_totals AS
-    SELECT * FROM dblink('pgbouncer', 'show stats_totals') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show stats_totals') AS _(
         database text,
         xact_count bigint,
         query_count bigint,
@@ -455,7 +523,9 @@ CREATE VIEW pgbouncer.stats_totals AS
         xact_time bigint,
         query_time bigint,
         wait_time bigint
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.stats_totals."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.stats_totals.database IS $$Statistics are presented per database.$$;
 COMMENT ON COLUMN pgbouncer.stats_totals.xact_count IS $$Total number of SQL transactions pooled by pgbouncer.$$;
 COMMENT ON COLUMN pgbouncer.stats_totals.query_count IS $$Total number of SQL queries pooled by pgbouncer.$$;
@@ -467,42 +537,67 @@ COMMENT ON COLUMN pgbouncer.stats_totals.wait_time IS $$Time spent by clients wa
 
 /* SHOW TOTALS */
 CREATE VIEW pgbouncer.totals AS
-    SELECT * FROM dblink('pgbouncer', 'show totals') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show totals') AS _(
         name text,
         value bigint
-    );
+    )
+    WHERE c.active;
+
+COMMENT ON COLUMN pgbouncer.totals."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 
 /* SHOW USERS */
 CREATE VIEW pgbouncer.users AS
-    SELECT * FROM dblink('pgbouncer', 'show users') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show users') AS _(
         name text,
         pool_mode text
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.users."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.users.name IS $$The user name$$;
 COMMENT ON COLUMN pgbouncer.users.pool_mode IS $$The user’s override pool_mode, or NULL if the default will be used instead.$$;
 
 /* SHOW VERSION */
 CREATE VIEW pgbouncer.version AS
-    SELECT * FROM dblink('pgbouncer', 'show version') AS _(
+    SELECT c.bouncer_name, _.*
+    FROM
+        pgbouncer.pgbouncer_config c
+    JOIN
+        LATERAL (SELECT dblink(c.connect_string, 'show version') AS _(
         version text
-    );
+    )
+    WHERE c.active;
+COMMENT ON COLUMN pgbouncer.version."pgbouncer_name" IS $$Name in pgbouncer_config.$$;
 COMMENT ON COLUMN pgbouncer.version.version IS $$Version number as text$$;
 
 /* DISABLE db */
-CREATE FUNCTION pgbouncer.disable(db TEXT)
+CREATE FUNCTION pgbouncer.disable(connect_string TEXT, db TEXT)
 RETURNS VOID
 LANGUAGE sql
 AS $$
-    SELECT dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'disable', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
+    SELECT dblink_exec(connect_string, pg_catalog.format('%s%s', 'disable', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
-COMMENT ON FUNCTION pgbouncer.disable(db TEXT) IS $$Reject all new client connections on the given database.$$;
+COMMENT ON FUNCTION pgbouncer.disable(connect_string TEXT, db TEXT) IS $$Reject all new client connections on the given pgbouncer and corresponding database.
+
+Typically, a call to this might look like
+
+SELECT pgbouncer.disable(c.connect_string, 'db')
+FROM pgbouncer.pgbouncer_config c
+WHERE c.bouncer_name = 'foo'$$;
 
 /* ENABLE db */
-CREATE FUNCTION pgbouncer.enable(db TEXT)
+CREATE FUNCTION pgbouncer.enable(pgbouncer_name TEXT, db TEXT)
 RETURNS VOID
 LANGUAGE sql
 AS $$
-    SELECT dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'enable', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
+    SELECT dblink_exec(pgbouncer_name, pg_catalog.format('%s%s', 'enable', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
 COMMENT ON FUNCTION pgbouncer.enable(db TEXT) IS $$Allow new client connections after a previous DISABLE command.$$;
 
@@ -618,8 +713,8 @@ SELECT
     dblink_exec('pgbouncer', pg_catalog.format('%s%s', 'wait_close', COALESCE(' ' || pg_catalog.quote_ident(db), '')));
 $$;
 COMMENT ON FUNCTION pgbouncer.wait_close(db TEXT) IS $$Wait until all server connections, either of the specified database or of all
-databases, have cleared the “close_needed” state (see SHOW SERVERS). This can be
-called after aRECONNECT** or RELOAD to wait until the respective configuration
+databases, have cleared the "close_needed" state (see SHOW SERVERS). This can be
+called after a RECONNECT or RELOAD to wait until the respective configuration
 change has been fully activated, for example in switchover scripts.$$;
 
 /* SET key = value */
