@@ -65,4 +65,4 @@ Dependencies
 Copyright and License
 ---------------------
 
-Copyright (c) 2015-2021 David Fetter <david@fetter.org>.
+Copyright (c) 2015-2023 David Fetter <david@fetter.org>.

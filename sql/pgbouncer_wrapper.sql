@@ -38,6 +38,7 @@ CREATE VIEW pgbouncer.active_sockets AS
         link text,
         remote_pid integer,
         tls text,
+        application_name text,
         recv_pos integer,
         pkt_pos integer,
         pkt_remain integer,
@@ -46,6 +47,8 @@ CREATE VIEW pgbouncer.active_sockets AS
         pkt_avail integer,
         send_avail integer
     );
+COMMENT ON VIEW pgbouncer.active_sockets IS $$Shows low-level information about sockets or only active sockets. This includes the information shown under SHOW CLIENTS and SHOW SERVERS as well as other more low-level information.$$;
+
 COMMENT ON COLUMN pgbouncer.active_sockets."type" IS $$C, for client.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."user" IS $$Client connected user.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."database" IS $$Database name.$$;
@@ -63,6 +66,7 @@ COMMENT ON COLUMN pgbouncer.active_sockets."ptr" IS $$Address of internal object
 COMMENT ON COLUMN pgbouncer.active_sockets."link" IS $$Address of server connection the client is paired with.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."remote_pid" IS $$Process ID, in case client connects over Unix socket and OS supports getting it.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."tls" IS $$A string with TLS connection information, or empty if not using TLS.$$;
+COMMENT ON COLUMN pgbouncer.active_sockets."application_name" IS $$A string with application name, or empty if not set.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."recv_pos" IS $$See recv_pos in include/iobuf.h.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."pkt_pos" IS $$See parse_pos in include/iobuf.h.$$;
 COMMENT ON COLUMN pgbouncer.active_sockets."pkt_remain" IS $$See the SBuf struct in include/sbuf.h.$$;
@@ -90,8 +94,11 @@ CREATE VIEW pgbouncer.clients AS
         ptr text,
         link text,
         remote_pid integer,
-        tls text
+        tls text,
+        application_name text
     );
+COMMENT ON VIEW pgbouncer.clients IS $$Details about clients$$;
+
 COMMENT ON COLUMN pgbouncer.clients."type" IS $$C, for client.$$;
 COMMENT ON COLUMN pgbouncer.clients."user" IS $$Client connected user.$$;
 COMMENT ON COLUMN pgbouncer.clients."database" IS $$Database name.$$;
@@ -109,6 +116,7 @@ COMMENT ON COLUMN pgbouncer.clients."ptr" IS $$Address of internal object for th
 COMMENT ON COLUMN pgbouncer.clients."link" IS $$Address of server connection the client is paired with.$$;
 COMMENT ON COLUMN pgbouncer.clients."remote_pid" IS $$Process ID, in case client connects over Unix socket and OS supports getting it.$$;
 COMMENT ON COLUMN pgbouncer.clients."tls" IS $$A string with TLS connection information, or empty if not using TLS.$$;
+COMMENT ON COLUMN pgbouncer.clients."application_name" IS $$A string with application name, or empty if not set.$$;
 
 /* SHOW CONFIG */
 CREATE VIEW pgbouncer.config AS
@@ -118,6 +126,8 @@ CREATE VIEW pgbouncer.config AS
         "default" text,
         changeable boolean
     );
+COMMENT ON VIEW pgbouncer.config IS $$Show the current configuration settings.$$;
+
 COMMENT ON COLUMN pgbouncer.config."key" IS $$Configuration variable name$$;
 COMMENT ON COLUMN pgbouncer.config."value" IS $$Configuration value$$;
 COMMENT ON COLUMN pgbouncer.config."default" IS $$Default value$$;
@@ -140,6 +150,8 @@ CREATE VIEW pgbouncer.databases AS
         paused integer,
         disabled integer
     );
+COMMENT ON VIEW pgbouncer.databases IS $$Info about databases pgbouncer knows about$$;
+
 COMMENT ON COLUMN pgbouncer.databases."name" IS $$Name of configured database entry.$$;
 COMMENT ON COLUMN pgbouncer.databases."host" IS $$Host pgbouncer connects to.$$;
 COMMENT ON COLUMN pgbouncer.databases."port" IS $$Port pgbouncer connects to.$$;
@@ -160,6 +172,8 @@ CREATE VIEW pgbouncer.dns_hosts AS
         ttl bigint,
         addrs text
     );
+COMMENT ON VIEW pgbouncer.dns_hosts IS $$Show host names in DNS cache.$$;
+
 COMMENT ON COLUMN pgbouncer.dns_hosts."hostname" IS $$Host name.$$;
 COMMENT ON COLUMN pgbouncer.dns_hosts."ttl" IS $$How many seconds until next lookup.$$;
 COMMENT ON COLUMN pgbouncer.dns_hosts."addrs" IS $$Comma separated list of addresses.$$;
@@ -171,6 +185,8 @@ CREATE VIEW pgbouncer.dns_zones AS
         serial bigint,
         count integer
     );
+COMMENT ON VIEW pgbouncer.dns_zones IS $$Show zones in DNS cache.$$;
+
 COMMENT ON COLUMN pgbouncer.dns_zones."zonename" IS $$Zone name.$$;
 COMMENT ON COLUMN pgbouncer.dns_zones."serial" IS $$Current serial.$$;
 COMMENT ON COLUMN pgbouncer.dns_zones."count" IS $$Host names belonging to this zone.$$;
@@ -204,7 +220,7 @@ CREATE VIEW pgbouncer.fds AS
     );
 COMMENT ON VIEW pgbouncer.fds IS $$Internal command - shows list of file descriptors in use with internal state attached to them.
 
-When the connected user has the user name “pgbouncer”, connects through the
+When the connected user has the user name "pgbouncer", connects through the
 Unix socket and has same the UID as the running process, the actual FDs are
 passed over the connection. This mechanism is used to do an online restart.
 Note: This does not work on Windows.
@@ -277,8 +293,11 @@ CREATE VIEW pgbouncer.pools AS
         "user" text,
         cl_active integer,
         cl_waiting integer,
+        cl_active_cancel_req integer,
         cl_cancel_req integer,
         sv_active integer,
+        sv_active_cancel integer,
+        sv_being_canceled integer,
         sv_idle integer,
         sv_used integer,
         sv_tested integer,
@@ -287,12 +306,17 @@ CREATE VIEW pgbouncer.pools AS
         maxwait_us integer,
         pool_mode text
     );
+COMMENT ON VIEW pgbouncer.pools IS $$One row per distinct combination of (database, user).$$;
+
 COMMENT ON COLUMN pgbouncer.pools."database" IS $$Database name.$$;
 COMMENT ON COLUMN pgbouncer.pools."user" IS $$User name.$$;
 COMMENT ON COLUMN pgbouncer.pools."cl_active" IS $$Client connections that are linked to server connection and can process queries.$$;
 COMMENT ON COLUMN pgbouncer.pools."cl_waiting" IS $$Client connections have sent queries but have not yet got a server connection.$$;
+COMMENT ON COLUMN pgbouncer.pools."cl_active" IS $$Client connections that are either linked to server connections or are idle with no queries waiting to be processed.$$;
 COMMENT ON COLUMN pgbouncer.pools."cl_cancel_req" IS $$Client connections that have not forwarded query cancellations to the server yet.$$;
 COMMENT ON COLUMN pgbouncer.pools."sv_active" IS $$Server connections that linked to client.$$;
+COMMENT ON COLUMN pgbouncer.pools."sv_active_cancel" IS $$Server connections that are currently forwarding a cancel request.$$;
+COMMENT ON COLUMN pgbouncer.pools."sv_being_canceled" IS $$Servers that normally could become idle but are waiting to do so until all in-flight cancel requests have completed that were sent to cancel a query on this server.$$;
 COMMENT ON COLUMN pgbouncer.pools."sv_idle" IS $$Server connections that unused and immediately usable for client queries.$$;
 COMMENT ON COLUMN pgbouncer.pools."sv_used" IS $$Server connections that have been idle more than server_check_delay, so they needs server_check_query to run on it before it can be used.$$;
 COMMENT ON COLUMN pgbouncer.pools."sv_tested" IS $$Server connections that are currently running either server_reset_query or server_check_query.$$;
@@ -320,8 +344,11 @@ CREATE VIEW pgbouncer.servers AS
         ptr text,
         link text,
         remote_pid integer,
-        tls text
+        tls text,
+        application_name text
     );
+COMMENT ON VIEW pgbouncer.servers IS $$One row per server pgbouncer knows about.$$;
+
 COMMENT ON COLUMN pgbouncer.servers.type IS $$S, for server.$$;
 COMMENT ON COLUMN pgbouncer.servers.user IS $$User name pgbouncer uses to connect to server.$$;
 COMMENT ON COLUMN pgbouncer.servers.database IS $$Database name.$$;
@@ -339,6 +366,7 @@ COMMENT ON COLUMN pgbouncer.servers.ptr IS $$Address of internal object for this
 COMMENT ON COLUMN pgbouncer.servers.link IS $$Address of client connection the server is paired with.$$;
 COMMENT ON COLUMN pgbouncer.servers.remote_pid IS $$PID of backend server process. In case connection is made over Unix socket and OS supports getting process ID info, its OS PID. Otherwise it’s extracted from cancel packet server sent, which should be PID in case server is PostgreSQL, but it’s a random number in case server it is another PgBouncer.$$;
 COMMENT ON COLUMN pgbouncer.servers.tls IS $$A string with TLS connection information, or empty if not using TLS.$$;
+COMMENT ON COLUMN pgbouncer.servers.application_name IS $$A string containing the application_name set on the linked client connection, or empty if this is not set, or if there is no linked connection.$$;
 
 /* SHOW SOCKETS */
 CREATE VIEW pgbouncer.sockets AS
@@ -360,6 +388,7 @@ CREATE VIEW pgbouncer.sockets AS
         link text,
         remote_pid integer,
         tls text,
+        application_name text,
         recv_pos integer,
         pkt_pos integer,
         pkt_remain integer,
@@ -368,6 +397,8 @@ CREATE VIEW pgbouncer.sockets AS
         pkt_avail integer,
         send_avail integer
     );
+COMMENT ON VIEW pgbouncer.sockets IS $$Shows low-level information about all sockets. This includes the information shown under SHOW CLIENTS and SHOW SERVERS as well as other more low-level information.$$;
+
 COMMENT ON COLUMN pgbouncer.sockets."type" IS $$C, for client.$$;
 COMMENT ON COLUMN pgbouncer.sockets."user" IS $$Client connected user.$$;
 COMMENT ON COLUMN pgbouncer.sockets."database" IS $$Database name.$$;
@@ -385,12 +416,27 @@ COMMENT ON COLUMN pgbouncer.sockets."ptr" IS $$Address of internal object for th
 COMMENT ON COLUMN pgbouncer.sockets."link" IS $$Address of server connection the client is paired with.$$;
 COMMENT ON COLUMN pgbouncer.sockets."remote_pid" IS $$Process ID, in case client connects over Unix socket and OS supports getting it.$$;
 COMMENT ON COLUMN pgbouncer.sockets."tls" IS $$A string with TLS connection information, or empty if not using TLS.$$;
+COMMENT ON COLUMN pgbouncer.sockets."application_name" IS $$A string containing the application_name set by the client for this connection, or empty if this was not set.$$;
 COMMENT ON COLUMN pgbouncer.sockets."recv_pos" IS $$See recv_pos in include/iobuf.h.$$;
 COMMENT ON COLUMN pgbouncer.sockets."pkt_pos" IS $$See parse_pos in include/iobuf.h.$$;
 COMMENT ON COLUMN pgbouncer.sockets."send_pos" IS $$See send_pos in include/sbuf.h.h.$$;
 COMMENT ON COLUMN pgbouncer.sockets."send_remain" IS $$Apparently always 0$$;
 COMMENT ON COLUMN pgbouncer.sockets."pkt_avail" IS $$See socket_row() in admin.c$$;
 COMMENT ON COLUMN pgbouncer.sockets."send_avail" IS $$See socket_row() in admin.c$$;
+
+/* SHOW STATE
+This was added in anticipation of 1.19, as 1.18 does not yet include it.
+
+CREATE VIEW pgbouncer.state AS
+    SELECT * FROM dblink('pgbouncer', 'show state') AS _(
+        key text,
+        value text
+    );
+COMMENT ON VIEW pgbouncer.state IS $$Show the PgBouncer state settings. Current states are active, paused and suspended.$$;
+
+COMMENT ON COLUMN pgbouncer.state."key" IS $$Setting name$$;
+COMMENT ON COLUMN pgbouncer.state."value" IS $$Setting value, currently one of (active, paused, suspended).$$;
+ */
 
 /* SHOW STATS */
 CREATE VIEW pgbouncer.stats AS
@@ -411,6 +457,8 @@ CREATE VIEW pgbouncer.stats AS
         avg_query_time bigint,
         avg_wait_time bigint
     );
+COMMENT ON VIEW pgbouncer.stats IS $$Shows statistics. In this and related commands, the total figures are since process start, the averages are updated every stats_period.$$;
+
 COMMENT ON COLUMN pgbouncer.stats.database IS $$Statistics are presented per database.$$;
 COMMENT ON COLUMN pgbouncer.stats.total_xact_count IS $$Total number of SQL transactions pooled by pgbouncer.$$;
 COMMENT ON COLUMN pgbouncer.stats.total_query_count IS $$Total number of SQL queries pooled by pgbouncer.$$;
@@ -439,6 +487,8 @@ CREATE VIEW pgbouncer.stats_averages AS
         query_time bigint,
         wait_time bigint
     );
+COMMENT ON VIEW pgbouncer.stats_averages IS $$Subset of SHOW STATS showing the average values (avg_).$$;
+
 COMMENT ON COLUMN pgbouncer.stats_averages.database IS $$Statistics are presented per database.$$;
 COMMENT ON COLUMN pgbouncer.stats_averages.xact_count IS $$Average transactions per second in last stat period.$$;
 COMMENT ON COLUMN pgbouncer.stats_averages.query_count IS $$Average queries per second in last stat period.$$;
@@ -460,6 +510,8 @@ CREATE VIEW pgbouncer.stats_totals AS
         query_time bigint,
         wait_time bigint
     );
+COMMENT ON VIEW pgbouncer.stats_totals IS $$Subset of SHOW STATS showing the total values (total_).$$;
+
 COMMENT ON COLUMN pgbouncer.stats_totals.database IS $$Statistics are presented per database.$$;
 COMMENT ON COLUMN pgbouncer.stats_totals.xact_count IS $$Total number of SQL transactions pooled by pgbouncer.$$;
 COMMENT ON COLUMN pgbouncer.stats_totals.query_count IS $$Total number of SQL queries pooled by pgbouncer.$$;
@@ -475,6 +527,10 @@ CREATE VIEW pgbouncer.totals AS
         name text,
         value bigint
     );
+COMMENT ON VIEW pgbouncer.totals IS $$Like SHOW STATS but aggregated across all databases.$$;
+
+COMMENT ON COLUMN pgbouncer.totals.name IS $$The setting$$;
+COMMENT ON COLUMN pgbouncer.totals.value IS $$The value$$;
 
 /* SHOW USERS */
 CREATE VIEW pgbouncer.users AS
@@ -482,6 +538,8 @@ CREATE VIEW pgbouncer.users AS
         name text,
         pool_mode text
     );
+COMMENT ON VIEW pgbouncer.totals IS $$Users known to pgbouncer$$;
+
 COMMENT ON COLUMN pgbouncer.users.name IS $$The user name$$;
 COMMENT ON COLUMN pgbouncer.users.pool_mode IS $$The user’s override pool_mode, or NULL if the default will be used instead.$$;
 
@@ -490,6 +548,7 @@ CREATE VIEW pgbouncer.version AS
     SELECT * FROM dblink('pgbouncer', 'show version') AS _(
         version text
     );
+COMMENT ON VIEW pgbouncer.version IS $$Version number$$;
 COMMENT ON COLUMN pgbouncer.version.version IS $$Version number as text$$;
 
 /* DISABLE db */
